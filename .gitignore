@@ -1,0 +1,10 @@
+#Ignore all
+*
+
+#Uningore extensions
+!*.*
+
+#ignore extensions I don't care about
+*.txt
+*.o
+*.hi
