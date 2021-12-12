@@ -1,5 +1,4 @@
-import Debug.Trace (trace)
-
+import Data.ByteString (elemIndices)
 type Days = Integer
 data LanternFish = NewFish Days | OldFish Days deriving (Show)
 
@@ -12,22 +11,15 @@ simDay (OldFish n)
   | n == 0    = [OldFish 6, NewFish 8]
   | otherwise = [OldFish (n-1)]
 
-simSchoolDay :: [LanternFish] -> Integer -> [LanternFish]
+simSchoolDay :: [LanternFish] -> Int -> [LanternFish]
 simSchoolDay x 0 = x
 simSchoolDay x n = simSchoolDay newX (n-1)
   where newX = concatMap simDay x
 
 --Pt2 Approach
---Operate on each fish only once. I want to get an output map that I then do the same too
-simTime :: Integer -> Integer -> Integer
-simTime daysLeft daysToFish
-  | daysLeft - daysToFish <= 0 = 1
-  | otherwise                  = simTime (daysLeft - daysToFish) 7 + simTime (daysLeft - daysToFish) 9
-
---simTime 18 3 = simTime 15 6                                          + simTime 15 8
---             = simTime 9 6               + simTime 9 8               + simTime 7 6               + simTime 7 8
---             = simTime 3 6 + simTime 3 8 + simTime 1 6 + simTime 1 8 + simTime 1 6 + simTime 1 8 + 1
---             = 7
+simOneDay :: (Integral a) => [a] -> [a]
+simOneDay [a,b,c,d,e,f,g,h,i] = [b,c,d,e,f,g,a+h,i,a]
+simOneDay _                   = []
 
 --Abridged words function to split at commas
 commas   :: String -> [String]
@@ -42,12 +34,14 @@ main = do
   putStrLn "Num days:"
   daysInput <- getLine
   ls <- readFile userInput
+  
   let nums = map read $ commas ls :: [Integer]
-      days = read daysInput :: Integer
-      --Uncomment for pt2
-      --fish = map OldFish nums
-      --test = simSchoolDay fish days
+      days = read daysInput :: Int
+  --    --pt1
+  --    fish = map OldFish nums
+  --    test = simSchoolDay fish days
   --print (length test)
   --pt2
-  let test2 = map (simTime days) nums
-  print (sum test2)
+  let freq = map (\x -> length $ filter (==x) nums) [0,1,2,3,4,5,6,7,8]
+      pt2  = iterate simOneDay freq !! days
+  print (sum pt2)
