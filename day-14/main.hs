@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-import Data.List (nub, isPrefixOf, (\\), elemIndices, sortBy)
+import Data.List (nub, isPrefixOf, (\\), elemIndices, sortBy, sort)
 import Data.Map ((!))
 import qualified Data.Map as M
+import Debug.Trace (trace)
 
 --Type decs
 type Rules = M.Map String Char
@@ -23,17 +24,17 @@ main = do
       newRules = M.fromList newCrudeRules --Map version of rules
       initPairs = getInitPairs template --List of init rules
       --BIGRAM
-      allStrs = map fst $ M.toList rules 
-      initBigram = foldl incMap (M.fromList $ zip allStrs (repeat 0)) initPairs
+      allStrs = map fst $ M.toList rules
+      initBigram = foldl incMap (M.fromList $ zip allStrs (repeat 0)) (zip initPairs (repeat 1))
       stepsNew = iterate (incBigram newRules) initBigram
       --SUMS
       allChars = map snd $ M.toList rules --List of all chars for sums
       basicSums = M.fromList $ zip allChars (repeat 0)
       initSums = addToSums (addToSums basicSums (head template,1)) (last template, 1)
-  print $ stepsNew !! 2
-  print $ stepsNew !! 3
-  print $ stepsNew !! 4
-  --print $ bigramToSums (stepsNew !! 10) initSums
+      endSums = bigramToSums (stepsNew !! 40) initSums
+      endSumsOrder = sort $ M.elems endSums
+      endSumsCalc = (last endSumsOrder - head endSumsOrder) `div` 2
+  print $ endSumsCalc
 
 --Parse rules
 getRules :: String -> (String,Char)
@@ -69,16 +70,17 @@ getInitPairs [x,y] = [x:[y]]
 getInitPairs (x:y:xs) = (x:[y]) : getInitPairs (y:xs)
 
 --Increment/loop etc.
-incMap :: Bigram -> String -> Bigram
-incMap bigram pair = M.adjust (+1) pair bigram
+incMap :: Bigram -> (String,Integer) -> Bigram
+incMap bigram (pair,int) = M.adjust (+int) pair bigram
 
 decMap :: Bigram -> Bigram
-decMap = M.map (\ x -> if x > 0 then x - 1 else 0)
+decMap = M.map (const 0)
 
 incBigram :: BiRules -> Bigram -> Bigram
-incBigram rules bigram = foldl incMap bigram incList
+incBigram rules bigram = foldl incMap (decMap bigram) incList
   where gt0List = M.keys $ M.filter (>0) bigram
-        incList = concat $ M.elems $ M.filterWithKey (\ k _ -> k `elem` gt0List) rules
+        incToList = M.toList $ M.filterWithKey (\ k _ -> k `elem` gt0List) rules
+        incList = concatMap (\x@(key,[pair1,pair2]) -> [(pair1, bigram ! key),(pair2, bigram ! key)]) incToList
 
 --Add to sums for final output
 addToSums :: Sums -> (Char,Integer) -> Sums
