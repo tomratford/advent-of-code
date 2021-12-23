@@ -1,0 +1,60 @@
+****NOTE: Included for comedy***
+
+s = displacement (distance)
+u = initial velocity
+v = final velocity
+a = acceleration
+t = time taken
+
+s = ut + 1/2at^2
+
+0 = at^2 + 2ut - 2s
+x = -b +- sqrt(b^2 -4ac) / 2a
+t = -2u +- sqrt(4u^2 - 4a(2s)) / 2a
+
+
+------------
+RUBBISH
+------------
+2 suvat equations to solve:
+1 for horizontal.
+for horizontal we can use n+(n-1)+(n-2)+...+1 to work out the t
+(quickAdd === n+n-1+...)
+[ u | quickAdd u > <lower x bound>] to get the _absolute minimum_ u needed
+
+assume we now have a u. We can get an accompanying T
+
+with U
+
+----------
+NEW
+----------
+Lets first use vertical. It's easier because of uniform acceleration.
+Lets first find t where u is in it's bounds.
+
+s = (-10,-5)
+u = [1..]
+v = ??
+a = -1
+t = ??
+
+s = ut + 1/2at^2
+-at^2 - 2ut + 2s = 0
+
+Horizontal now.
+
+if u > 0 then a = -1
+
+s = ut + 1/2at^2
+u = (s - 1/2at^2) / t
+
+test: DELETE
+(20 - 1/2(-1)8^2) / 8
+
+20/27 + 27/2
+0.74 + 13.5 = 14
+
+30/27 + 27
+
+
+
