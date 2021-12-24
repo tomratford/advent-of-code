@@ -8,7 +8,7 @@ main = do
       fileWords = drop 2 $ words rawFile
       parsed = map parseBounds fileWords
       checkWithBound = checkValidVert (head parsed) (last parsed)
-      vertVals = concat [checkWithBound y | y <- [1..500]]
+      vertVals = concat [checkWithBound y | y <- [1..100]]
   print $ length vertVals
 
 parseNumsWithDots :: String -> String
