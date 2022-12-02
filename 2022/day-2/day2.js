@@ -6,84 +6,19 @@ parse = fs.readFileSync(process.argv[2], "utf-8")
     .split(os.EOL)
 
 // part1
+const p1 = {
+    "A Y": 7, "B Z": 8, "C X": 9,
+    "A X": 4, "B X": 5, "C Y": 6,
+    "A Z": 1, "B Y": 2, "C Z": 3
+}
 
-const win = ["A Y", "B Z", "C X"]
-const draw = ["A X", "B Y", "C Z"]
-
-console.log(parse.reduce((a, v) => {
-    score = 0
-    if (win.includes(v)) {
-        score += 6
-    } else if (draw.includes(v)) {
-        score += 3
-    }
-
-    switch (v.split(" ")[1]) {
-        case 'X':
-            score += 1
-            break
-        case 'Y':
-            score += 2
-            break
-        case 'Z':
-            score += 3
-            break
-    }
-
-    return a + score
-}, 0))
+console.log(parse.reduce((a, v) => a + p1[v], 0))
 
 // part2
-console.log(parse.reduce((a, v) => {
-    score = 0
+const p2 = {
+    "A Y": 4, "B Z": 9, "C X": 2,
+    "A X": 3, "B X": 1, "C Y": 6,
+    "A Z": 8, "B Y": 5, "C Z": 7
+}
 
-    tmp = v.split(" ")
-    opp = tmp[0]
-    res = tmp[1]
-
-    switch (res) {
-        case 'X':
-            switch (opp) {
-                case 'A':
-                    score += 3
-                    break
-                case 'B':
-                    score += 1
-                    break
-                case 'C':
-                    score += 2
-                    break;
-            }
-            break
-        case 'Y':
-            score += 3
-            switch (opp) {
-                case 'A':
-                    score += 1
-                    break
-                case 'B':
-                    score += 2
-                    break
-                case 'C':
-                    score += 3
-                    break;
-            }
-            break
-        case 'Z':
-            score += 6
-            switch (opp) {
-                case 'A':
-                    score += 2
-                    break
-                case 'B':
-                    score += 3
-                    break
-                case 'C':
-                    score += 1
-                    break;
-            }
-            break
-    }
-
-    return a + score
-}, 0))
+console.log(parse.reduce((a, v) => a + p2[v], 0))
