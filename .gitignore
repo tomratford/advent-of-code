@@ -1,3 +1,9 @@
+*
+!*.*
+!*/
+
+tmp/
+
 .Rproj.user
 .Rhistory
 .RData
