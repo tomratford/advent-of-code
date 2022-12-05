@@ -31,7 +31,7 @@ applyMoves = foldl (\x y -> y x)
 move :: Int -> Int -> Int -> Command
 move amt from to crt =
   let top = take amt $ fromMaybe [] (M.lookup from crt)
-   in M.adjust (reverse top ++) to $ M.adjust (drop amt) from crt
+   in M.adjust (top ++) to $ M.adjust (drop amt) from crt
 
 --Parsing
 parseBody :: String -> Command
