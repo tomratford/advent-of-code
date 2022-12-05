@@ -4,6 +4,8 @@
 
 tmp/
 
+*.exe
+
 .Rproj.user
 .Rhistory
 .RData
