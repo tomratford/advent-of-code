@@ -7,3 +7,5 @@
 | 5 | Haskell | |
 | 6 | Haskell | |
 | 7 | R | |
+| 8 | Haskell | |
+| 9 | Python | |
