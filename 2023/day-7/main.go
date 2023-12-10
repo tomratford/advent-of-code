@@ -134,7 +134,7 @@ func Part2(input []Hand) int {
 					biggest = j
 				}
 			}
-			cards[j] += Js
+			cards[biggest] += Js
 			score, err := ScoreHand(cards)
 			if err != nil {
 				panic(err)
