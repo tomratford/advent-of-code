@@ -1,7 +1,7 @@
 /*
-Advent of code; Year YYYY, Day XX
+Advent of code; Year 2023, Day 12
 
-# Some notes on the challenge or solution here
+Inital shit permutation solution
 
 usage:
 
