@@ -27,7 +27,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	//	"slices"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -50,7 +50,12 @@ func main() {
 		return
 	}
 
-	fmt.Println(Part1(p))
+	if DEBUG {
+		fmt.Println(Part1([]Row{p[5]}))
+	} else {
+		fmt.Println(Part1(p))
+		fmt.Println(Part2(p))
+	}
 }
 
 // Structs and types
@@ -60,6 +65,8 @@ const (
 	UNKNOWN = 0
 	EMPTY = -1
 )
+
+const DEBUG = false
 
 type Row struct {
 	line []int
@@ -71,9 +78,20 @@ func Part1(input []Row) int {
 	score := 0
 	for _, r := range input {
 		states := MakeStates(r.sizes)
+		if DEBUG {
+			fmt.Printf("         ")
+			for i:=0;i<len(states);i++ {
+				fmt.Printf(" %d", i)
+			}
+			fmt.Printf("\n")
+			fmt.Printf("states: %v\n", states)
+		}
 		state_map := make(map[int]int,len(states))
 		state_map[0] = 1 // Start on the empty state
 		for _, c := range append(r.line, EMPTY) {
+			if DEBUG {
+				fmt.Printf("state_map: %v, char: %d\n", state_map, c)
+			}			
 			new_state_map := maps.Clone(state_map)
 			for n, v := range state_map {
 				if n >= len(states) {
@@ -89,21 +107,17 @@ func Part1(input []Row) int {
 					}
 					// else its already on an dot/empty state and we continue on said state
 				case BROKEN:
-					if state_map[n] == BROKEN { // If we are on a broken
-						new_state_map[n] -= v
-						if n+1 < len(states) && states[n+1] == BROKEN { // Only move if the next state is an empty state
-							new_state_map[n+1] += v
-						}
-					} else { // if empty state
-						new_state_map[n] -= v
-						new_state_map[n+1] += v // We don't need to check as an empty state is always followed by a broken state
+					new_state_map[n] -= v
+					if n+1 < len(states) && states[n+1] == BROKEN { // Only move if the next state is a broken state
+						new_state_map[n+1] += v
 					}
 				case UNKNOWN:
 					// We are always going to proceed to the next state with a broken
 					if states[n] == BROKEN {
 						new_state_map[n] -= v
 					} // We may be able to stay on our current state if we are on a empty
-					
+
+					// Proceed to next state
 					if n+1 < len(states) {
 						new_state_map[n+1] += v
 					}
@@ -112,6 +126,10 @@ func Part1(input []Row) int {
 				}
 			}
 			state_map = new_state_map
+		}
+		if DEBUG {
+			fmt.Printf("state_map: %v, (FINAL)\n", state_map)
+			fmt.Printf("count: %d\n", state_map[len(states) - 1])			
 		}
 		score += state_map[len(states)-1]
 	}
@@ -130,8 +148,20 @@ func MakeStates(ns []int) []int {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input []Row) int {
+	// Make abridged input dataset
+
+	rows := slices.Clone(input)
+	
+	for i := range rows {
+		for j:=0;j<4;j++ {
+			rows[i].line = append(rows[i].line, UNKNOWN)			
+			rows[i].line = append(rows[i].line, input[i].line...)
+			rows[i].sizes = append(rows[i].sizes, input[i].sizes...)
+		}
+	}
+
+	return Part1(rows)
 }
 
 // Function to parse the input string (with newlines) into output of choice
