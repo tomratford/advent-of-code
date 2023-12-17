@@ -1,7 +1,21 @@
 /*
 Advent of code; Year 2023, Day 12
 
-Inital shit permutation solution
+	  NOTE: you could just do this as a dynamic programming problem and implement
+	  a cache or something but I am a little nerd and I knew there was a 'smart'
+	  way to solve this.
+
+	  This solutions uses non-deterministic finite automata.
+	I knew I recognised this problem from somewhere - and low and behold someone on
+	the solutions reddit megathread had reminded me what the hell that is. I will
+	try to comment the code (if only for my own interest in the future) but the
+	gist is this:
+	 * We have a set of states (made up of '.', '#') defined by the 1,1,3 bit of
+	   our input. i.e. 1,1,3 = .#.#.###
+	 * We have our inputs, we work through our states using the inputs. a dot can
+	   loop on itself infinitely. i.e. if we are on a dot, 3 more dots keeps up on
+	   that same dot state.
+	 * Count how many are on the final state - that is our permutations
 
 usage:
 
@@ -11,10 +25,11 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
+	//	"slices"
 	"strconv"
 	"strings"
-	"slices"
 )
 
 func main() {
@@ -55,83 +70,63 @@ type Row struct {
 func Part1(input []Row) int {
 	score := 0
 	for _, r := range input {
-		perms := getAllPerms(r.line)
-		valid := 0
-		for _, p := range perms {
-			if isValid(p, r.sizes) {
-				valid += 1
+		states := MakeStates(r.sizes)
+		state_map := make(map[int]int,len(states))
+		state_map[0] = 1 // Start on the empty state
+		for _, c := range append(r.line, EMPTY) {
+			new_state_map := maps.Clone(state_map)
+			for n, v := range state_map {
+				if n >= len(states) {
+					continue // skip values that are too large
+				}
+				switch c {
+				case EMPTY:
+					if states[n] == BROKEN {
+						new_state_map[n] -= v
+						if states[n+1] == EMPTY { // Only move if the next state is an empty state
+							new_state_map[n+1] += v
+						}
+					}
+					// else its already on an dot/empty state and we continue on said state
+				case BROKEN:
+					if state_map[n] == BROKEN { // If we are on a broken
+						new_state_map[n] -= v
+						if n+1 < len(states) && states[n+1] == BROKEN { // Only move if the next state is an empty state
+							new_state_map[n+1] += v
+						}
+					} else { // if empty state
+						new_state_map[n] -= v
+						new_state_map[n+1] += v // We don't need to check as an empty state is always followed by a broken state
+					}
+				case UNKNOWN:
+					// We are always going to proceed to the next state with a broken
+					if states[n] == BROKEN {
+						new_state_map[n] -= v
+					} // We may be able to stay on our current state if we are on a empty
+					
+					if n+1 < len(states) {
+						new_state_map[n+1] += v
+					}
+				default:
+					panic("shouldn't happen")
+				}
 			}
+			state_map = new_state_map
 		}
-		score += valid
+		score += state_map[len(states)-1]
 	}
 	return score
 }
 
-func getAllPerms(input []int) [][]int {
-	start := make([][]int,0,2^(len(input)))
-	start = append(start, input)
-	for {
-		temps := make([][]int, 0, 2^(len(start) - 1))
-		for _, xs := range start {
-			for i, x := range xs {
-				if x == UNKNOWN {
-					copy := slices.Clone(xs)
-					xs[i] = BROKEN
-					copy[i] = EMPTY
-					temps = append(temps, copy)
-				}
-			}
+func MakeStates(ns []int) []int {
+	states := []int{EMPTY} // Start at a empty state irregardless
+	for _, n := range ns {
+		for i:=0;i<n;i++ {
+			states = append(states, BROKEN)
 		}
-		if len(temps) == 0 {
-			return start
-		} else {
-			start = append(start, temps...)
-		}
+		states = append(states, EMPTY) // This means our last entry will always be empty
 	}
-}
-
-func isValid(xs, ns []int) bool {
-	temp := []int{}
-	i := 0
-	// Append a final empty to ensure we check all our loops
-	for _, x := range xs {
-		switch x {
-		case BROKEN:
-			temp = append(temp, x)
-		case EMPTY:
-			// Ensure we at least have 1 element in temp
-			if len(temp) != 0 {
-				// Guard going too far if that happens
-				if i >= len(ns) {
-					return false
-				}
-				if len(temp) == ns[i] {
-					temp = []int{}
-					i += 1
-				} else {
-					return false
-				} 
-			}
-		default:
-			fmt.Printf("Bad input: %d\n", x)
-			return false
-		}
-	}
-	if len(temp) != 0 {
-		// Guard going too far if that happens
-		if i != len(ns)-1 {
-			return false
-		}			
-		if len(temp) == ns[i] {
-			return true
-		} else {
-			return false
-		} 
-	}	
-	if i == len(ns) {
-		return true
-	}
-	return false
+	return states
 }
 
 // Solution for Part 2 of the challenge
