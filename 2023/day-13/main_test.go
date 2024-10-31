@@ -1,0 +1,73 @@
+package main
+
+import "testing"
+
+func TestRotate(t *testing.T) {
+	lines := "...##..###..##...##...#.##.#"
+	linelen := 7
+	t.Run("Single rotate", func(t *testing.T) {
+		got, got_n := rotate(lines, linelen)
+		want := ".#.#.#..#.###.##.#...#.#.#.."
+		want_n := 4
+		if got != want {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", want, got)
+		}
+		if got_n != want_n {
+			t.Errorf("Expected %d, got %d\n", want_n, got_n)
+		}
+	})
+
+	t.Run("Double rotate", func(t *testing.T) {
+		got, got_n := rotate(rotate(lines, linelen))
+		want := "#.##.#...##...##..###..##..."
+		want_n := linelen
+		if got != want {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", want, got)
+		}
+		if got_n != want_n {
+			t.Errorf("Expected %d, got %d\n", want_n, got_n)
+		}
+	})
+
+	t.Run("Triple rotate", func(t *testing.T) {
+		got, got_n := rotate(rotate(rotate(lines, linelen)))
+		want := "..#.#.#...#.##.###.#..#.#.#."
+		want_n := 4
+		if got != want {
+			t.Errorf("Expected:\n%s\nGot:\n%s\n", want, got)
+		}
+		if got_n != want_n {
+			t.Errorf("Expected %d, got %d\n", want_n, got_n)
+		}
+	})
+}
+
+func TestInner(t *testing.T) {
+	// Tests run on input data
+	t.Run("Input 0", func(t *testing.T) {
+		line := "...##.#.##.###.##.###...##.##...###.#..##.##.##.#...#####.#.####....#...#.##...#.##.#....#.#.#.#.#...####"
+		got := part1_inner(line, 7)
+		want := 200
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 1", func(t *testing.T) {
+		line := "###..##.######.##..#..#.#......#.##.##.#..#.##.#..##.#.##.#..##..#.##..#...###..###..#..#...###..###..#.#.##.#..##..#.##.##.#..#.##.#..#..#..#.#......#.####..##.######.##...#.#..######..#..###....#..#..#.#.###....#..#....##.#####.#..#.###...#.....####......#...#.#.##.#.#....###.#......#.#"
+		got := part1_inner(line, 17)
+		want := 500
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 2", func(t *testing.T) {
+		line := "##.##.######.####.#..##.####.#..###.##.###.#########....#....#....###..#####."
+		got := part1_inner(line, 11)
+		want := 4
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+}

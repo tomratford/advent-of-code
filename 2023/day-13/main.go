@@ -10,12 +10,8 @@ usage:
 package main
 
 import (
-	"cmp"
 	"fmt"
-	"image"
-	"math"
 	"os"
-	"slices"
 	"strings"
 )
 
@@ -31,121 +27,104 @@ func main() {
 		return
 	}
 
-	p, err := Parse(string(input))
+	p, n, err := Parse(string(input))
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	Part1(p)
+	//fmt.Println(part1_inner(p[2], n[2]))
+	fmt.Println(Part1(p, n))
 }
 
 // Structs and types
 
-type Pt = image.Point
-
 /* Any structs required for the challenge go here */
 
 // Solution for Part 1 of the challenge
-func Part1(input [][]Pt) int {
-	sol := 0
-	for i, points := range input {
-		foundY, y := checkVertical(points)
-		if foundY {
-			sol += int(100 * math.Round(y))
-			// fmt.Printf("y = %f\n", y)
-			continue
-		}
-		foundX, x := checkHorizontal(points)
-		if foundX {
-			sol += int(math.Round(x))
-			// fmt.Printf("x = %f\n", x)
-			continue
-		}
-		fmt.Println(i)
-		panic("no sol found")
+func Part1(input []string, line_lens []int) int {
+	rtn := 0
+	for i := range input {
+		fmt.Println(i, part1_inner(input[i], line_lens[i]))
+		rtn += part1_inner(input[i], line_lens[i])
 	}
-	fmt.Println(sol)
-	return 1
+	return rtn
 }
 
-/*
-Check for a possible horizontal reflection
-
-Rotate all points by 90 degrees and check for vertical
-*/
-func checkHorizontal(points []Pt) (bool, float64) {
-	newPoints := make([]Pt, 0, len(points))
-	for _, p := range points {
-		newPoints = append(newPoints, Pt{-p.Y, p.X}) // 90 degrees counter-clockwise
+func part1_inner(input string, line_len int) int {
+	number_of_lines := len(input) / line_len
+	if vertical := findVertical(input, line_len); vertical != -1 {
+		// fmt.Println(vertical)
+		return vertical * 100
 	}
-	check, x := checkVertical(newPoints)
-	if !check {
-		return false, -1
+	if vertical2 := findVertical(rotate(rotate(input, line_len))); vertical2 != -1 {
+		// fmt.Println(vertical2)
+		return (number_of_lines - vertical2) * 100
 	}
-	return true, x
-
-	// // dead code to reverse if necessary
-	// reversePoints := make([]Pt, 0, len(newPoints))
-	// for _, p := range newPoints {
-	// 	reversePoints = append(reversePoints, Pt{p.Y, -p.X}) // 90 degrees clockwise
-	// }
+	if horizontal := findVertical(rotate(input, line_len)); horizontal != -1 {
+		// fmt.Println(horizontal)
+		return line_len - horizontal
+	}
+	if horizontal2 := findVertical(rotate(rotate(rotate(input, line_len)))); horizontal2 != -1 {
+		// fmt.Println(horizontal2)
+		return horizontal2
+	}
+	fmt.Println("No sol found")
+	return 0
 }
 
-/*
-Checks for a possible vertical reflection.
-
-In theory, a reflection is equal if the points in the interior rectangle is the same?
-So, if we reflect at y=2.5, we only care about points between y = [0,5] to check.
-*/
-func checkVertical(points []Pt) (bool, float64) {
-	maxY := slices.MaxFunc(points, func(a, b Pt) int { return cmp.Compare(a.Y, b.Y) })
-
-	for y := 0.5; y < float64(maxY.Y); y++ {
-		new, old := reflect(points, y, maxY.Y)
-		if hasElements(new, old) {
-			return true, y
+// Finds a vertical reflection across a horizontal line
+func findVertical(input string, n int) int {
+	i := 0
+	j := len(input)
+	m := n
+	for {
+		if i+m > len(input) || j-m < 0 {
+			return -1
+		}
+		left := input[i : i+m]
+		var rb strings.Builder
+		for k := 1; k <= m/n; k++ {
+			if j-m < 0 {
+				return -1
+			}
+			rb.WriteString(input[j-k*n : j-((k-1)*n)])
+		}
+		right := rb.String()
+		// fmt.Println(left, right)
+		if left != right {
+			m = n
+			i += n
+		}
+		if left == right {
+			m += n
+			if i+m == len(input) {
+				return ((i / n) + (j / n)) / 2 // midpoint
+			}
 		}
 	}
-	// if we have gone past the maximum point
-	return false, -1
 }
 
-func hasElements(x, y []Pt) bool {
-	if len(x) != len(y) {
-		return false
-	}
-	xmap := make(map[Pt]int, len(x))
-	for _, xval := range x {
-		xmap[xval]++
-	}
-	for _, yval := range y {
-		if _, ok := xmap[yval]; !ok {
-			return false
+// Returns 90 degrees anticlockwise rotated string and new line length
+func rotate(input string, n int) (string, int) {
+	n_rows := len(input) / n // Old number of columns
+	n_cols := n              // Old number of rows
+	new := make([]string, len(input))
+	for i := 0; i < n_cols; i++ { // For each new column
+		for j := 0; j < n_rows; j++ { // For each new row
+			new[(i*n_rows)+j] = string(input[((j+1)*n_cols)-i-1])
 		}
 	}
-	return true
+	return strings.Join(new, ""), n_rows
 }
 
-// Return the new reflected and truncated old slice of points
-func reflect(points []Pt, y float64, maxY int) ([]Pt, []Pt) {
-	new_points := slices.Clone(points)
-	points_to_keep := make([]int, 0, len(new_points)) // Points to keep to check
-	for i, p := range points {
-		new_points[i].Y = p.Y + int(2*(y-float64(p.Y)))
-		ceiling := int(2 * y)
-		floor := 0
-		if new_points[i].Y <= ceiling && new_points[i].Y >= floor {
-			points_to_keep = append(points_to_keep, i)
-		}
+// reverse a string
+func reverse(s string) string {
+	chars := []rune(s)
+	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
+		chars[i], chars[j] = chars[j], chars[i]
 	}
-	rtn1 := make([]Pt, 0, len(points_to_keep)) // new points
-	rtn2 := make([]Pt, 0, len(points_to_keep)) // truncated old
-	for i := 0; i < len(points_to_keep); i++ {
-		rtn1 = append(rtn1, new_points[points_to_keep[i]])
-		rtn2 = append(rtn2, points[points_to_keep[i]])
-	}
-	return rtn1, rtn2
+	return string(chars)
 }
 
 // Solution for Part 2 of the challenge
@@ -154,35 +133,12 @@ func Part2(input string) int {
 }
 
 // Function to parse the input string (with newlines) into output of choice
-func Parse(input string) ([][]Pt, error) {
-	n := strings.Count(input, "\n\n") // Newlines
-	rtn := make([][]Pt, 0, n)
-
-	indiv := make([]Pt, 0)
-	x := 0
-	y := 0
-	newshape := false
-	for _, r := range input {
-		if r == '#' {
-			newshape = false
-			indiv = append(indiv, Pt{x, y})
-		}
-		if r == '.' {
-			newshape = false
-		}
-		x += 1
-		if r == '\n' {
-			x = 0
-			y += 1
-			if newshape {
-				rtn = append(rtn, slices.Clone(indiv)) // add to rtn
-				indiv = make([]Pt, 0)                  // start anew
-				y = 0
-			}
-			newshape = true
-		}
+func Parse(input string) ([]string, []int, error) {
+	maps := strings.Split(input, "\n\n")
+	linelen := make([]int, len(maps))
+	for i := range maps {
+		linelen[i] = strings.Index(maps[i], "\n")
+		maps[i] = strings.ReplaceAll(maps[i], "\n", "")
 	}
-	rtn = append(rtn, slices.Clone(indiv)) // add to rtn
-
-	return rtn, nil
+	return maps, linelen, nil
 }
