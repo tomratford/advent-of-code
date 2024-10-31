@@ -42,7 +42,7 @@ func TestRotate(t *testing.T) {
 	})
 }
 
-func TestInner(t *testing.T) {
+func TestPart1Inner(t *testing.T) {
 	// Tests run on input data
 	t.Run("Input 0", func(t *testing.T) {
 		line := "...##.#.##.###.##.###...##.##...###.#..##.##.##.#...#####.#.####....#...#.##...#.##.#....#.#.#.#.#...####"
@@ -66,6 +66,72 @@ func TestInner(t *testing.T) {
 		line := "##.##.######.####.#..##.####.#..###.##.###.#########....#....#....###..#####."
 		got := part1_inner(line, 11)
 		want := 4
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+}
+
+func TestPart2Inner(t *testing.T) {
+	// Tests run on input data
+	t.Run("Input 0", func(t *testing.T) {
+		line := "...##.#.##.###.##.###...##.##...###.#..##.##.##.#...#####.#.####....#...#.##...#.##.#....#.#.#.#.#...####"
+		got := part2_inner(line, 7)
+		want := 1100
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 1", func(t *testing.T) {
+		line := "###..##.######.##..#..#.#......#.##.##.#..#.##.#..##.#.##.#..##..#.##..#...###..###..#..#...###..###..#.#.##.#..##..#.##.##.#..#.##.#..#..#..#.#......#.####..##.######.##...#.#..######..#..###....#..#..#.#.###....#..#....##.#####.#..#.###...#.....####......#...#.#.##.#.#....###.#......#.#"
+		got := part2_inner(line, 17)
+		want := 11
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 2", func(t *testing.T) {
+		line := "##.##.######.####.#..##.####.#..###.##.###.#########....#....#....###..#####."
+		got := part2_inner(line, 11)
+		want := 200
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 5", func(t *testing.T) {
+		line := "....###...#..###..####..##..##.###..###.#.###...####...######..#..#..##..###.##..##.#.....#........#.##.."
+		got := part2_inner(line, 15)
+		want := 5
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 6", func(t *testing.T) {
+		line := ".#.#.#..#.#.#.##.#.###.#.###..##.....#....###.###..#..#.#.####..##.###.##.####.####...##.#.###.###..#...."
+		got := part2_inner(line, 7)
+		want := 1000
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 10", func(t *testing.T) {
+		line := "..#.....#.###.#.####...##..#......#.#.###..###.#.#..###......#.#.##..##.#.###.####.###.####.##..##.#......#.#.#.#..###.###..###......#."
+		got := part2_inner(line, 9)
+		want := 1300
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("Input 11", func(t *testing.T) {
+		line := "#####....####..##..##..##.###..#..#..####..##..##..###..#....#..####...#....##..###.##.###.####.####.###..##.####.##.###.##..##.####...#..#...#"
+		got := part2_inner(line, 13)
+		want := 7
 		if got != want {
 			t.Errorf("Expected %d, got %d", want, got)
 		}
