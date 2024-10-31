@@ -35,6 +35,9 @@ func main() {
 
 	//fmt.Println(part1_inner(p[2], n[2]))
 	fmt.Println(Part1(p, n))
+
+	fmt.Println(part2_inner(p[11], n[11]))
+	// fmt.Println(Part2(p, n))
 }
 
 // Structs and types
@@ -45,7 +48,7 @@ func main() {
 func Part1(input []string, line_lens []int) int {
 	rtn := 0
 	for i := range input {
-		fmt.Println(i, part1_inner(input[i], line_lens[i]))
+		// fmt.Println(i, part1_inner(input[i], line_lens[i]))
 		rtn += part1_inner(input[i], line_lens[i])
 	}
 	return rtn
@@ -128,8 +131,95 @@ func reverse(s string) string {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input []string, line_lens []int) int {
+	rtn := 0
+	for i := range input {
+		fmt.Println(i, part2_inner(input[i], line_lens[i]))
+		rtn += part2_inner(input[i], line_lens[i])
+	}
+	return rtn
+}
+
+func part2_inner(input string, line_len int) int {
+	part1 := part1_inner(input, line_len)
+	// if vertical2 := findVertical2(rotate(rotate(input, line_len))); vertical2 != -1 && vertical2 != part1 {
+	// 	// fmt.Println(vertical2)
+	// 	number_of_lines := len(input) / line_len
+	// 	return (number_of_lines - vertical2) * 100
+	// }
+	// if vertical := findVertical2(input, line_len); vertical != -1 && vertical != part1 {
+	// 	// fmt.Println(vertical)
+	// 	return vertical * 100
+	// }
+	// if horizontal := findVertical2(rotate(input, line_len)); horizontal != -1 && horizontal != part1 {
+	// 	// fmt.Println(horizontal)
+	// 	return line_len - horizontal
+	// }
+	if horizontal2 := findVertical2(rotate(rotate(rotate(input, line_len)))); horizontal2 != -1 && horizontal2 != part1 {
+		// fmt.Println(horizontal2)
+		return horizontal2
+	}
+	fmt.Println("No sol found")
+	return 0
+}
+
+// Finds a vertical reflection across a horizontal line
+func findVertical2(input string, n int) int {
+	i := 0
+	j := len(input)
+	m := n
+	for {
+		if i+m > len(input) || j-m < 0 {
+			if i/n < len(input)/n {
+				m = n
+				i += n
+				continue
+			}
+			return -1
+		}
+		left := input[i : i+m]
+		var rb strings.Builder
+		for k := 1; k <= m/n; k++ {
+			if j-m < 0 {
+				break
+			}
+			rb.WriteString(input[j-k*n : j-((k-1)*n)])
+		}
+		right := rb.String()
+		fmt.Println(left, right, distance(left, right), ((i/n)+(j/n))/2, i+2*n, j-m-n)
+		if dist := distance(left, right); dist > 1 {
+			if dist == 2 && i+2*n == j-m-n { // edge case
+				return ((i / n) + (j / n)) / 2 // midpoint
+			}
+			m = n
+			i += n
+		}
+		if dist := distance(left, right); dist <= 1 {
+			if j-m-i-n == 2*n && dist == 1 {
+				return ((i / n) + (j / n)) / 2 // midpoint
+			}
+			if i+n == j-m && dist == 1 {
+				return ((i / n) + (j / n)) / 2 // midpoint
+			}
+			m += n
+			if i+n == j-m && dist == 1 {
+				return ((i / n) + (j / n)) / 2 // midpoint
+			}
+		}
+	}
+}
+
+func distance(x, y string) int {
+	if len(x) != len(y) {
+		return -1
+	}
+	diff := 0
+	for i := range x {
+		if x[i] != y[i] {
+			diff += 1
+		}
+	}
+	return diff
 }
 
 // Function to parse the input string (with newlines) into output of choice
