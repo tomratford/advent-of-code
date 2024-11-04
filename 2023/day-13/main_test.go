@@ -136,4 +136,13 @@ func TestPart2Inner(t *testing.T) {
 			t.Errorf("Expected %d, got %d", want, got)
 		}
 	})
+
+	t.Run("Input 87", func(t *testing.T) {
+		line := ".#.....#######..###########.###..##.......##..#.....###.#..###..#...####........###.#######...#...######.##...#.#####"
+		got := part2_inner(line, 9)
+		want := 12
+		if got != want {
+			t.Errorf("Expected %d, got %d", want, got)
+		}
+	})
 }
