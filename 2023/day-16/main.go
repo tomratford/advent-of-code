@@ -106,86 +106,92 @@ func Part1(objs map[image.Point]rune) int {
 	// initialise starting beam
 	beams := []Beam{
 		{
-			image.Point{0, 0},
+			image.Point{-1, 0},
 			RIGHT,
 		},
 	}
-	history := make(map[Beam]int, BOUNDS.Max.X*BOUNDS.Max.Y)
-
+	history := make(map[Beam]int)
+	stopped := make([]Beam, 0)
 	for len(beams) > 0 {
-		beam := beams[0]
-		for {
-			if v, ok := objs[beam.Point]; ok {
+		// update beam position and find those which have stopped or hit a loop
+		to_remove := make([]int, 0, len(beams))
+		for i := range beams {
+			history[beams[i]]++                                     // Add the beam to the history
+			beams[i].Point = beams[i].Point.Add(beams[i].Direction) // Move the beam in its direction
+
+			// Check point still in bounds
+			if !beams[i].Point.In(BOUNDS) { // Check if beam has left the square
+				to_remove = append(to_remove, i)
+			} else if _, ok := history[beams[i]]; ok { // Check if beam has hit a known position
+				to_remove = append(to_remove, i)
+			}
+		}
+		// Remove those which have stopped/hit a loop; Work backwards to avoid panic
+		for j := len(to_remove) - 1; j >= 0; j-- {
+			i := to_remove[j]
+			stopped = append(stopped, beams[i]) // stop tracking
+			if i+1 > len(beams) {
+				beams = beams[:i]
+			} else {
+				beams = append(beams[:i], beams[i+1:]...)
+			}
+		}
+		// loop over only the valid beams left
+		// check if they have hit an object, and update directions
+		for i := range beams {
+			if v, ok := objs[beams[i].Point]; ok {
 				switch v {
 				case '|':
-					if beam.Direction.Eq(RIGHT) || beam.Direction.Eq(LEFT) {
+					if beams[i].Direction.Eq(RIGHT) || beams[i].Direction.Eq(LEFT) {
 						new_b := Beam{
-							beam.Point,
+							beams[i].Point,
 							UP,
 						}
-						beam.Direction = DOWN
+						beams[i].Direction = DOWN
 						beams = append(beams, new_b)
 					}
 				case '-':
-					if beam.Direction.Eq(UP) || beam.Direction.Eq(DOWN) {
+					if beams[i].Direction.Eq(UP) || beams[i].Direction.Eq(DOWN) {
 						new_b := Beam{
-							beam.Point,
+							beams[i].Point,
 							LEFT,
 						}
-						beam.Direction = RIGHT
+						beams[i].Direction = RIGHT
 						beams = append(beams, new_b)
 					}
 				case '\\':
-					if beam.Direction.Eq(UP) {
-						beam.Direction = LEFT
-					} else if beam.Direction.Eq(RIGHT) {
-						beam.Direction = DOWN
-					} else if beam.Direction.Eq(LEFT) {
-						beam.Direction = UP
-					} else if beam.Direction.Eq(DOWN) {
-						beam.Direction = RIGHT
+					if beams[i].Direction.Eq(UP) {
+						beams[i].Direction = LEFT
+					} else if beams[i].Direction.Eq(RIGHT) {
+						beams[i].Direction = DOWN
+					} else if beams[i].Direction.Eq(LEFT) {
+						beams[i].Direction = UP
+					} else if beams[i].Direction.Eq(DOWN) {
+						beams[i].Direction = RIGHT
 					} else {
 						panic("we love a good unreachable case here")
 					}
 				case '/':
-					if beam.Direction.Eq(UP) {
-						beam.Direction = RIGHT
-					} else if beam.Direction.Eq(RIGHT) {
-						beam.Direction = UP
-					} else if beam.Direction.Eq(LEFT) {
-						beam.Direction = DOWN
-					} else if beam.Direction.Eq(DOWN) {
-						beam.Direction = LEFT
+					if beams[i].Direction.Eq(UP) {
+						beams[i].Direction = RIGHT
+					} else if beams[i].Direction.Eq(RIGHT) {
+						beams[i].Direction = UP
+					} else if beams[i].Direction.Eq(LEFT) {
+						beams[i].Direction = DOWN
+					} else if beams[i].Direction.Eq(DOWN) {
+						beams[i].Direction = LEFT
 					} else {
 						panic("we love a good unreachable case here")
 					}
 				}
 			}
-
-			history[beam]++
-			beam.Point = beam.Point.Add(beam.Direction)
-
-			if !beam.Point.In(BOUNDS) {
-				fmt.Println("OUT:", beam)
-				break
-			} else if _, ok := history[beam]; ok {
-				fmt.Println("HIT:", beam)
-				break
-			}
-		}
-
-		// Exit or continue
-		if len(beams) == 1 {
-			break
-		} else {
-			beams = beams[1:]
 		}
 	}
 	hit := make(map[image.Point]int)
 	for k := range history {
 		hit[k.Point]++
 	}
-	fmt.Println(len(hit)) // minus one to remove the {-1,0} starting point
+	fmt.Println(len(hit) - 1) // minus one to remove the {-1,0} starting point
 	return 1
 }
 
