@@ -82,7 +82,7 @@ func prettyPrint(objs map[image.Point]rune) {
 		fmt.Print("\n")
 	}
 }
-func prettyPrint2(objs map[image.Point]int) {
+func prettyPrint2(objs map[image.Point]rune, history map[Beam]int) {
 	fmt.Print(" ")
 	for i := range BOUNDS.Max.X {
 		fmt.Print(i % 10)
@@ -91,8 +91,28 @@ func prettyPrint2(objs map[image.Point]int) {
 	for j := range BOUNDS.Max.Y {
 		fmt.Print(j % 10)
 		for i := range BOUNDS.Max.X {
-			if _, ok := objs[image.Point{i, j}]; ok {
-				fmt.Printf("#")
+			if v, ok := objs[image.Point{i, j}]; ok {
+				fmt.Printf(string(v))
+			} else if _, ok := history[Beam{
+				image.Point{i, j},
+				RIGHT,
+			}]; ok {
+				fmt.Print(">")
+			} else if _, ok := history[Beam{
+				image.Point{i, j},
+				LEFT,
+			}]; ok {
+				fmt.Print("<")
+			} else if _, ok := history[Beam{
+				image.Point{i, j},
+				DOWN,
+			}]; ok {
+				fmt.Print("v")
+			} else if _, ok := history[Beam{
+				image.Point{i, j},
+				UP,
+			}]; ok {
+				fmt.Print("^")
 			} else {
 				fmt.Print(".")
 			}
@@ -110,35 +130,33 @@ func Part1(objs map[image.Point]rune) int {
 			RIGHT,
 		},
 	}
-	history := make(map[Beam]int)
-	stopped := make([]Beam, 0)
+	history := make(map[Beam]int, BOUNDS.Dx()*BOUNDS.Dy())
 	for len(beams) > 0 {
+		// // Pretty print in terminal
+		// defer fmt.Printf("\033[%dB\015", BOUNDS.Max.Y+1)
+		// prettyPrint2(objs, history)
+		// fmt.Printf("\033[%dA\015", BOUNDS.Max.Y+1)
+		// time.Sleep(199_999_999)
+
 		// update beam position and find those which have stopped or hit a loop
-		to_remove := make([]int, 0, len(beams))
-		for i := range beams {
+		for i := len(beams) - 1; i >= 0; i-- { // work backwards to avoid panic removing objects
 			history[beams[i]]++                                     // Add the beam to the history
 			beams[i].Point = beams[i].Point.Add(beams[i].Direction) // Move the beam in its direction
 
-			// Check point still in bounds
-			if !beams[i].Point.In(BOUNDS) { // Check if beam has left the square
-				to_remove = append(to_remove, i)
-			} else if _, ok := history[beams[i]]; ok { // Check if beam has hit a known position
-				to_remove = append(to_remove, i)
+			// Check if we've hit a known point or we're still in bounds
+			if _, ok := history[beams[i]]; ok || !beams[i].Point.In(BOUNDS) {
+				if ok {
+					fmt.Println(beams[i])
+				}
+				if i+1 > len(beams) { // i.e last point
+					beams = beams[:i]
+				} else {
+					beams = append(beams[:i], beams[i+1:]...)
+				}
+				continue // skip to next beam
 			}
-		}
-		// Remove those which have stopped/hit a loop; Work backwards to avoid panic
-		for j := len(to_remove) - 1; j >= 0; j-- {
-			i := to_remove[j]
-			stopped = append(stopped, beams[i]) // stop tracking
-			if i+1 > len(beams) {
-				beams = beams[:i]
-			} else {
-				beams = append(beams[:i], beams[i+1:]...)
-			}
-		}
-		// loop over only the valid beams left
-		// check if they have hit an object, and update directions
-		for i := range beams {
+
+			// check if they have hit an object, and update directions
 			if v, ok := objs[beams[i].Point]; ok {
 				switch v {
 				case '|':
