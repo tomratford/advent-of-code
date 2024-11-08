@@ -35,7 +35,10 @@ func main() {
 		return
 	}
 
-	fmt.Println(Part1(p))
+	fmt.Println(Part1(p, Beam{
+		image.Point{-1, 0},
+		RIGHT,
+	}))
 }
 
 // Structs and types
@@ -122,14 +125,9 @@ func prettyPrint2(objs map[image.Point]rune, history map[Beam]int) {
 }
 
 // Solution for Part 1 of the challenge
-func Part1(objs map[image.Point]rune) int {
+func Part1(objs map[image.Point]rune, start Beam) int {
 	// initialise starting beam
-	beams := []Beam{
-		{
-			image.Point{-1, 0},
-			RIGHT,
-		},
-	}
+	beams := []Beam{start}
 	history := make(map[Beam]int, BOUNDS.Dx()*BOUNDS.Dy())
 	for len(beams) > 0 {
 		// // Pretty print in terminal
@@ -211,8 +209,8 @@ func Part1(objs map[image.Point]rune) int {
 	for k := range history {
 		hit[k.Point]++
 	}
-	fmt.Println(len(hit) - 1) // minus one to remove the {-1,0} starting point
-	return 1
+	//fmt.Println(len(hit) - 1) // minus one to remove the {-1,0} starting point
+	return len(hit) - 1
 }
 
 func sliceCheck(xs, ys []image.Point) bool {
@@ -234,7 +232,8 @@ func sliceCheck(xs, ys []image.Point) bool {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
+func Part2(objs map[image.Point]rune) int {
+	left := make([]Beam, 0)
 	return 1
 }
 
