@@ -144,16 +144,18 @@ func Part1(objs map[image.Point]rune) int {
 			beams[i].Point = beams[i].Point.Add(beams[i].Direction) // Move the beam in its direction
 
 			// Check if we've hit a known point or we're still in bounds
-			if _, ok := history[beams[i]]; ok || !beams[i].Point.In(BOUNDS) {
-				if ok {
-					fmt.Println(beams[i])
-				}
-				if i+1 > len(beams) { // i.e last point
-					beams = beams[:i]
+			if v, ok := history[beams[i]]; ok || !beams[i].Point.In(BOUNDS) {
+				if _, ok2 := objs[beams[i].Point]; (ok2 && v == 1) && ok { // if we've only hit the object once
+					// This accounts for if a beam moves into a object that we've already left, i.e. we enter up, leave west, or arrive west, enter up
+					// do naut
 				} else {
-					beams = append(beams[:i], beams[i+1:]...)
+					if i+1 > len(beams) { // i.e last point
+						beams = beams[:i]
+					} else {
+						beams = append(beams[:i], beams[i+1:]...)
+					}
+					continue // skip to next beam
 				}
-				continue // skip to next beam
 			}
 
 			// check if they have hit an object, and update directions
