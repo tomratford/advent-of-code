@@ -39,6 +39,8 @@ func main() {
 		image.Point{-1, 0},
 		RIGHT,
 	}))
+
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -233,8 +235,35 @@ func sliceCheck(xs, ys []image.Point) bool {
 
 // Solution for Part 2 of the challenge
 func Part2(objs map[image.Point]rune) int {
-	left := make([]Beam, 0)
-	return 1
+	beams := make([]Beam, 0, 2*BOUNDS.Dx()+2*BOUNDS.Dy())
+	// left/right start
+	for i := range BOUNDS.Dy() {
+		beams = append(beams, Beam{
+			image.Point{-1, i},
+			RIGHT,
+		}, Beam{
+			image.Point{BOUNDS.Dx() + 1, i},
+			LEFT,
+		})
+	}
+	// up/down start
+	for i := range BOUNDS.Dx() {
+		beams = append(beams, Beam{
+			image.Point{i, -1},
+			DOWN,
+		}, Beam{
+			image.Point{i, BOUNDS.Dy() + 1},
+			UP,
+		})
+	}
+	rtn := 0
+	for _, b := range beams {
+		tmp := Part1(objs, b)
+		if tmp > rtn {
+			rtn = tmp
+		}
+	}
+	return rtn
 }
 
 // Function to parse the input string (with newlines) into output of choice
