@@ -14,7 +14,6 @@ import (
 	"container/heap"
 	"fmt"
 	"image"
-	"maps"
 	"os"
 	"slices"
 	"strconv"
@@ -57,10 +56,10 @@ var DOWN = Direction{0, 1}
 var UP = Direction{0, -1}
 
 var DIRMAP = map[Direction][3]Direction{
-	LEFT:  [3]Direction{LEFT, DOWN, UP},
-	RIGHT: [3]Direction{RIGHT, UP, DOWN},
-	DOWN:  [3]Direction{DOWN, LEFT, RIGHT},
-	UP:    [3]Direction{UP, LEFT, RIGHT},
+	LEFT:  {LEFT, DOWN, UP},
+	RIGHT: {RIGHT, UP, DOWN},
+	DOWN:  {DOWN, LEFT, RIGHT},
+	UP:    {UP, LEFT, RIGHT},
 }
 
 type Crucible struct {
@@ -69,7 +68,7 @@ type Crucible struct {
 	N_Dir int
 }
 
-func (c Crucible) Move(d Direction, cost int) (Crucible, error) {
+func (c Crucible) Move(d Direction) (Crucible, error) {
 	var new_n_dir int
 	if c.Dir.Eq(d) {
 		if c.N_Dir == 3 {
@@ -124,134 +123,66 @@ func prettyPrint(objs map[image.Point]int, route []image.Point) {
 
 // Solution for Part 1 of the challenge
 func Part1(graph map[image.Point]int, source image.Point, target image.Point) int {
-	dist, _ := Dijkstra(graph, source, target)
+	Q := make(PriorityQueue, 0, len(graph))
 
-	// p := target
-	// route := make([]image.Point, 0, len(graph))
-	// for {
-	// 	route = append(route, p)
-	// 	v, ok := prev[p]
-	// 	if !ok {
-	// 		break
-	// 	}
-	// 	p = v
-	// }
+	dist := make(map[Crucible]int)
+	prev := make(map[Crucible]Crucible)
 
-	fmt.Println(dist)
-
-	//prettyPrint(graph, route)
-
-	for i := 0; i <= 3; i++ {
-		x, ok := dist[Crucible{
-			target,
+	Q.Push(&Item{
+		Crucible{
+			source,
 			RIGHT,
-			i,
-		}]
-		if ok {
-			return x
-		}
-	}
-
-	for i := 0; i <= 3; i++ {
-		x, ok := dist[Crucible{
-			target,
+			0,
+		},
+		0,
+		0,
+	})
+	Q.Push(&Item{
+		Crucible{
+			source,
 			DOWN,
-			i,
-		}]
-		if ok {
-			return x
-		}
-	}
+			0,
+		},
+		0,
+		1,
+	})
 
-	return -1
-}
-
-func Dijkstra(graph map[image.Point]int, source image.Point, target image.Point) (map[Crucible]int, map[Crucible]Crucible) {
-
-	dist := make(map[Crucible]int, len(graph))
-	prev := make(map[Crucible]Crucible, len(graph))
-
-	pq := make(PriorityQueue, len(graph))
-
-	source_right := Crucible{
+	dist[Crucible{
 		source,
 		RIGHT,
 		0,
-	}
-
-	source_down := Crucible{
+	}] = 0
+	dist[Crucible{
 		source,
 		DOWN,
 		0,
-	}
+	}] = 0
 
-	dist[source_right] = 0
-	dist[source_down] = 0
-
-	pq.VPush(source_right, 0)
-	pq.VPush(source_down, 0)
-
-	for len(pq) > 0 {
-		u, _ := pq.VPop()
-		vs := getNeighbours(u)
-		for _, v := range vs {
-			alt := dist[u] + graph[v.Pos]
-			if dv, ok := dist[*v]; ok && alt < dv {
-				prev[*v] = u
-				dist[*v] = alt
-				pq.VPush(*v, alt)
+	for len(Q) > 0 {
+		u, _ := Q.VPop()
+		if u.Pos.Eq(target) {
+			fmt.Println(dist)
+			return dist[u]
+		}
+		for _, d := range DIRMAP[u.Dir] {
+			v, err := u.Move(d)
+			if err == nil {
+				alt := dist[u] + graph[v.Pos]
+				if dv, ok := dist[v]; ok {
+					if alt < dv {
+						dist[v] = alt
+						prev[v] = u
+					}
+				} else {
+					dist[v] = alt
+					prev[v] = u
+					Q.VPush(v, dist[v])
+				}
 			}
 		}
 	}
-
-	return dist, prev
-}
-
-func getNeighbours(u Crucible) []*Crucible {
-	ifEq := func(d1 Direction, d2 Direction, n int) int {
-		if d1.Eq(d2) {
-			return n + 1
-		} else {
-			return 1
-		}
-	}
-
-	u_P := u.Pos
-	u_D := u.Dir
-	u_N := u.N_Dir
-
-	neighbours := map[image.Point]*Crucible{
-		LEFT: {
-			u_P.Add(LEFT),
-			LEFT,
-			ifEq(LEFT, u_D, u_N),
-		},
-		RIGHT: {
-			u_P.Add(RIGHT),
-			RIGHT,
-			ifEq(RIGHT, u_D, u_N),
-		},
-		DOWN: {
-			u_P.Add(DOWN),
-			DOWN,
-			ifEq(DOWN, u_D, u_N),
-		},
-		UP: {
-			u_P.Add(UP),
-			UP,
-			ifEq(UP, u_D, u_N),
-		},
-	}
-
-	for k, v := range neighbours {
-		if v.N_Dir > 3 {
-			delete(neighbours, k)
-		} else if !v.Pos.In(BOUNDS) {
-			delete(neighbours, k)
-		}
-	}
-
-	return slices.Collect(maps.Values(neighbours))
+	fmt.Println(dist)
+	return -1
 }
 
 // Priority queue implementation, modified from https://pkg.go.dev/container/heap#example-package-PriorityQueue
