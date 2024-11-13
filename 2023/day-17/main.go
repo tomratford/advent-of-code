@@ -125,8 +125,12 @@ func prettyPrint(objs map[image.Point]int, route []image.Point) {
 func Part1(graph map[image.Point]int, source image.Point, target image.Point) int {
 	Q := make(PriorityQueue, 0, len(graph))
 
-	dist := make(map[Crucible]int)
-	prev := make(map[Crucible]Crucible)
+	dist := make(map[image.Point]int)
+	prev := make(map[image.Point]image.Point)
+
+	for k := range graph {
+		dist[k] = 999_999
+	}
 
 	Q.Push(&Item{
 		Crucible{
@@ -147,36 +151,32 @@ func Part1(graph map[image.Point]int, source image.Point, target image.Point) in
 		1,
 	})
 
-	dist[Crucible{
-		source,
-		RIGHT,
-		0,
-	}] = 0
-	dist[Crucible{
-		source,
-		DOWN,
-		0,
-	}] = 0
+	dist[source] = 0
 
 	for len(Q) > 0 {
 		u, _ := Q.VPop()
 		if u.Pos.Eq(target) {
-			fmt.Println(dist)
-			return dist[u]
+			p := target
+			route := make([]image.Point, 0, len(graph))
+			for {
+				route = append(route, p)
+				v, ok := prev[p]
+				if !ok {
+					break
+				}
+				p = v
+			}
+			prettyPrint(graph, route)
+			return dist[u.Pos]
 		}
 		for _, d := range DIRMAP[u.Dir] {
 			v, err := u.Move(d)
 			if err == nil {
-				alt := dist[u] + graph[v.Pos]
-				if dv, ok := dist[v]; ok {
-					if alt < dv {
-						dist[v] = alt
-						prev[v] = u
-					}
-				} else {
-					dist[v] = alt
-					prev[v] = u
-					Q.VPush(v, dist[v])
+				alt := dist[u.Pos] + graph[v.Pos]
+				if alt < dist[v.Pos] {
+					dist[v.Pos] = alt
+					prev[v.Pos] = u.Pos
+					Q.VPush(v, alt)
 				}
 			}
 		}
