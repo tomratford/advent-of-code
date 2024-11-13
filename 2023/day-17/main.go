@@ -42,6 +42,8 @@ func main() {
 	target := image.Pt(BOUNDS.Max.X-1, BOUNDS.Max.Y-1)
 
 	fmt.Println(Part1(p, source, target))
+	fmt.Println(Part2(p, source, target))
+
 }
 
 // Structs and types
@@ -55,36 +57,23 @@ var RIGHT = Direction{1, 0}
 var DOWN = Direction{0, 1}
 var UP = Direction{0, -1}
 
-var DIRMAP = map[Direction][3]Direction{
-	LEFT:  {LEFT, DOWN, UP},
-	RIGHT: {RIGHT, UP, DOWN},
-	DOWN:  {DOWN, LEFT, RIGHT},
-	UP:    {UP, LEFT, RIGHT},
+var DIRMAP = map[Direction][2]Direction{
+	LEFT:  {DOWN, UP},
+	RIGHT: {UP, DOWN},
+	DOWN:  {LEFT, RIGHT},
+	UP:    {LEFT, RIGHT},
 }
 
 type Crucible struct {
-	Pos   image.Point
-	Dir   Direction
-	N_Dir int
+	Pos image.Point
+	Dir Direction
 }
 
-func (c Crucible) Move(d Direction) (Crucible, error) {
-	var new_n_dir int
-	if c.Dir.Eq(d) {
-		if c.N_Dir == 3 {
-			return Crucible{}, fmt.Errorf("Cannot move more than 3 in the same direction")
-		} else {
-			new_n_dir = c.N_Dir + 1
-		}
-	} else {
-		new_n_dir = 1
-	}
-
-	if new_pos := c.Pos.Add(d); new_pos.In(BOUNDS) {
+func (c Crucible) Move(d Direction, amount int) (Crucible, error) {
+	if new_pos := c.Pos.Add(d.Mul(amount)); new_pos.In(BOUNDS) {
 		return Crucible{
 			new_pos,
 			d,
-			new_n_dir,
 		}, nil
 	} else {
 		return Crucible{}, fmt.Errorf("Out of bounds")
@@ -104,7 +93,7 @@ func (c Crucible) String() string {
 	} else {
 		symb = fmt.Sprintf("Error: %v", c.Dir)
 	}
-	return fmt.Sprintf("(%d,%d)%d%s", c.Pos.X, c.Pos.Y, c.N_Dir, symb)
+	return fmt.Sprintf("(%d,%d)%s", c.Pos.X, c.Pos.Y, symb)
 }
 
 func prettyPrint(objs map[image.Point]int, route []image.Point) {
@@ -123,134 +112,156 @@ func prettyPrint(objs map[image.Point]int, route []image.Point) {
 
 // Solution for Part 1 of the challenge
 func Part1(graph map[image.Point]int, source image.Point, target image.Point) int {
-	Q := make(PriorityQueue, len(graph))
+	Q := make(PQ[Crucible], 0, len(graph))
 
-	dist := make(map[image.Point]int)
+	dist := make(map[Crucible]int)
 	prev := make(map[image.Point]image.Point)
 
-	for k := range graph {
-		dist[k] = 999_999
-	}
-
-	Q.Push(&Item{
+	Q.GPush(
 		Crucible{
 			source,
 			RIGHT,
-			0,
 		},
-		0,
-		0,
-	})
-	Q.Push(&Item{
+		0)
+	Q.GPush(
 		Crucible{
 			source,
 			DOWN,
-			0,
 		},
-		0,
-		1,
-	})
-	heap.Init(&Q)
+		0)
 
-	dist[source] = 0
+	dist[Crucible{
+		source,
+		RIGHT,
+	}] = 0
+	dist[Crucible{
+		source,
+		DOWN,
+	}] = 0
 
 	for len(Q) > 0 {
-		u, heat := Q.VPop()
-		fmt.Printf("Popd %v with %d\n", u, heat)
+		u, heat := Q.GPop()
+		//fmt.Printf("Popd %v with %d\n", u, heat)
 
 		if u.Pos.Eq(target) {
-			p := target
-			route := make([]image.Point, 0, len(graph))
-			for {
-				route = append(route, p)
-				v, ok := prev[p]
-				if !ok {
-					break
-				}
-				p = v
-			}
-			prettyPrint(graph, route)
-			return dist[u.Pos]
+			// p := target
+			// route := make([]image.Point, 0, len(graph))
+			// for {
+			// 	route = append(route, p)
+			// 	v, ok := prev[p]
+			// 	if !ok {
+			// 		break
+			// 	}
+			// 	p = v
+			// }
+			// prettyPrint(graph, route)
+			return dist[u]
 		}
 		for _, d := range DIRMAP[u.Dir] {
-			v, err := u.Move(d)
-			if err == nil {
-				alt := dist[u.Pos] + graph[v.Pos]
-				if alt < dist[v.Pos] {
-					dist[v.Pos] = alt
-					prev[v.Pos] = u.Pos
-					fmt.Printf("Push %v with %d\n", v, alt)
-					Q.VPush(v, alt)
+			alt := heat
+			lastPos := u.Pos
+			for i := 1; i <= 3; i++ {
+				v, err := u.Move(d, i)
+				if err == nil {
+					alt += graph[v.Pos]
+					if x, ok := dist[v]; !ok || (ok && alt < x) {
+						dist[v] = alt
+						prev[v.Pos] = lastPos
+						//fmt.Printf("Push %v with %d\n", v, alt)
+						Q.GPush(v, alt)
+					}
+					lastPos = v.Pos
 				}
 			}
 		}
 	}
-	fmt.Println(dist)
 	return -1
 }
 
-// Priority queue implementation, modified from https://pkg.go.dev/container/heap#example-package-PriorityQueue
-
-// An Item is something we manage in a priority queue.
-type Item struct {
-	value    Crucible // The value of the item; arbitrary.
-	priority int      // The priority of the item in the queue.
-	// The index is needed by update and is maintained by the heap.Interface methods.
-	index int // The index of the item in the heap.
+// Priority queue implementation, from https://github.com/mnml/aoc/blob/main/2023/17/1.go
+type pqi[T any] struct {
+	v T
+	p int
 }
 
-// A PriorityQueue implements heap.Interface and holds Items.
-type PriorityQueue []*Item
+type PQ[T any] []pqi[T]
 
-func (pq PriorityQueue) Len() int { return len(pq) }
-
-func (pq PriorityQueue) Less(i, j int) bool {
-	// We want Pop to give us the lowest, not highest, priority so we use less than here.
-	return pq[i].priority < pq[j].priority
-}
-
-func (pq PriorityQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq *PriorityQueue) Push(x any) {
-	n := len(*pq)
-	item := x.(*Item)
-	item.index = n
-	*pq = append(*pq, item)
-}
-
-func (pq *PriorityQueue) Pop() any {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil  // don't stop the GC from reclaiming the item eventually
-	item.index = -1 // for safety
-	*pq = old[0 : n-1]
-	return item
-}
-
-// update modifies the priority and value of an Item in the queue.
-func (pq *PriorityQueue) update(item *Item, value Crucible, priority int) {
-	item.value = value
-	item.priority = priority
-	heap.Fix(pq, item.index)
-}
-
-func (pq *PriorityQueue) VPush(v Crucible, p int) {
-	heap.Push(pq, &Item{v, p, 0}) // OK To do as Push changes 0 to n
-}
-
-func (pq *PriorityQueue) VPop() (v Crucible, p int) {
-	x := heap.Pop(pq).(*Item)
-	return x.value, x.priority
-}
+func (q PQ[_]) Len() int           { return len(q) }
+func (q PQ[_]) Less(i, j int) bool { return q[i].p < q[j].p }
+func (q PQ[_]) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q *PQ[T]) Push(x any)        { *q = append(*q, x.(pqi[T])) }
+func (q *PQ[_]) Pop() (x any)      { x, *q = (*q)[len(*q)-1], (*q)[:len(*q)-1]; return x }
+func (q *PQ[T]) GPush(v T, p int)  { heap.Push(q, pqi[T]{v, p}) }
+func (q *PQ[T]) GPop() (T, int)    { x := heap.Pop(q).(pqi[T]); return x.v, x.p }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(graph map[image.Point]int, source image.Point, target image.Point) int {
+	Q := make(PQ[Crucible], 0, len(graph))
+
+	dist := make(map[Crucible]int)
+	prev := make(map[image.Point]image.Point)
+
+	Q.GPush(
+		Crucible{
+			source,
+			RIGHT,
+		},
+		0)
+	Q.GPush(
+		Crucible{
+			source,
+			DOWN,
+		},
+		0)
+
+	dist[Crucible{
+		source,
+		RIGHT,
+	}] = 0
+	dist[Crucible{
+		source,
+		DOWN,
+	}] = 0
+
+	for len(Q) > 0 {
+		u, heat := Q.GPop()
+		//fmt.Printf("Popd %v with %d\n", u, heat)
+
+		if u.Pos.Eq(target) {
+			// p := target
+			// route := make([]image.Point, 0, len(graph))
+			// for {
+			// 	route = append(route, p)
+			// 	v, ok := prev[p]
+			// 	if !ok {
+			// 		break
+			// 	}
+			// 	p = v
+			// }
+			// prettyPrint(graph, route)
+			return dist[u]
+		}
+		for _, d := range DIRMAP[u.Dir] {
+			alt := heat
+			lastPos := u.Pos
+			for i := 1; i <= 10; i++ {
+				v, err := u.Move(d, i)
+				if err == nil {
+					alt += graph[v.Pos]
+					if x, ok := dist[v]; !ok || (ok && alt < x) {
+						dist[v] = alt
+						prev[v.Pos] = lastPos
+						//fmt.Printf("Push %v with %d\n", v, alt)
+						if i > 3 {
+							Q.GPush(v, alt)
+						}
+					}
+					lastPos = v.Pos
+				}
+			}
+		}
+	}
+	return -1
 }
 
 // Function to parse the input string (with newlines) into output of choice
