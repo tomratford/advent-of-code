@@ -248,13 +248,11 @@ func Part2(graph map[image.Point]int, source image.Point, target image.Point) in
 				v, err := u.Move(d, i)
 				if err == nil {
 					alt += graph[v.Pos]
-					if x, ok := dist[v]; !ok || (ok && alt < x) {
+					if x, ok := dist[v]; (!ok || (ok && alt < x)) && i > 3 {
 						dist[v] = alt
 						prev[v.Pos] = lastPos
 						//fmt.Printf("Push %v with %d\n", v, alt)
-						if i > 3 {
-							Q.GPush(v, alt)
-						}
+						Q.GPush(v, alt)
 					}
 					lastPos = v.Pos
 				}
