@@ -50,8 +50,8 @@ var BOUNDS image.Rectangle
 
 type Direction = image.Point
 
-var LEFT = Direction{1, 0}
-var RIGHT = Direction{-1, 0}
+var LEFT = Direction{-1, 0}
+var RIGHT = Direction{1, 0}
 var DOWN = Direction{0, 1}
 var UP = Direction{0, -1}
 
@@ -123,7 +123,7 @@ func prettyPrint(objs map[image.Point]int, route []image.Point) {
 
 // Solution for Part 1 of the challenge
 func Part1(graph map[image.Point]int, source image.Point, target image.Point) int {
-	Q := make(PriorityQueue, 0, len(graph))
+	Q := make(PriorityQueue, len(graph))
 
 	dist := make(map[image.Point]int)
 	prev := make(map[image.Point]image.Point)
@@ -150,11 +150,14 @@ func Part1(graph map[image.Point]int, source image.Point, target image.Point) in
 		0,
 		1,
 	})
+	heap.Init(&Q)
 
 	dist[source] = 0
 
 	for len(Q) > 0 {
-		u, _ := Q.VPop()
+		u, heat := Q.VPop()
+		fmt.Printf("Popd %v with %d\n", u, heat)
+
 		if u.Pos.Eq(target) {
 			p := target
 			route := make([]image.Point, 0, len(graph))
@@ -176,6 +179,7 @@ func Part1(graph map[image.Point]int, source image.Point, target image.Point) in
 				if alt < dist[v.Pos] {
 					dist[v.Pos] = alt
 					prev[v.Pos] = u.Pos
+					fmt.Printf("Push %v with %d\n", v, alt)
 					Q.VPush(v, alt)
 				}
 			}
@@ -201,8 +205,8 @@ type PriorityQueue []*Item
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool {
-	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
-	return pq[i].priority > pq[j].priority
+	// We want Pop to give us the lowest, not highest, priority so we use less than here.
+	return pq[i].priority < pq[j].priority
 }
 
 func (pq PriorityQueue) Swap(i, j int) {
@@ -236,11 +240,11 @@ func (pq *PriorityQueue) update(item *Item, value Crucible, priority int) {
 }
 
 func (pq *PriorityQueue) VPush(v Crucible, p int) {
-	pq.Push(&Item{v, p, 0}) // OK To do as Push changes 0 to n
+	heap.Push(pq, &Item{v, p, 0}) // OK To do as Push changes 0 to n
 }
 
 func (pq *PriorityQueue) VPop() (v Crucible, p int) {
-	x := pq.Pop().(*Item)
+	x := heap.Pop(pq).(*Item)
 	return x.value, x.priority
 }
 
