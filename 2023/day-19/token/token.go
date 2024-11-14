@@ -4,6 +4,7 @@ type Type string
 
 const (
 	ILLEGAL = "ILLEGAL"
+	EOF     = "EOF"
 
 	ID  = "ID"
 	INT = "INT"

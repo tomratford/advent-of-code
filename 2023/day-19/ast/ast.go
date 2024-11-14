@@ -1,16 +1,7 @@
 package ast
 
-type Expression interface {
-	Execute()
-}
+type System struct {
+	Workflows map[string][]Operation
 
-type Workflow struct {
-	Expressions []Expression
-}
-
-type Part struct {
-	X int
-	M int
-	A int
-	S int
+	Data []Part
 }

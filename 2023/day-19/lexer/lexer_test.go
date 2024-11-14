@@ -62,6 +62,7 @@ pv{a>1716:R,A}
 		{token.EQ, "=", 4},
 		{token.INT, "2876", 4},
 		{token.RBRACE, "}", 4},
+		{token.EOF, "\x00", 5},
 	}
 
 	l := New(input)
