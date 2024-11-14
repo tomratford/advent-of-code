@@ -82,6 +82,8 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
 	switch l.char {
+	case 0:
+		return newToken(token.EOF, l.line, l.char)
 	case '=':
 		t = newToken(token.EQ, l.line, l.char)
 	case ',':
