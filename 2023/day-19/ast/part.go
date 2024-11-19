@@ -1,6 +1,10 @@
 package ast
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/tomratford/day-19/token"
+)
 
 type Part struct {
 	X int
@@ -9,7 +13,7 @@ type Part struct {
 	S int
 }
 
-func (p Part) GetValue(s string) (int, error) {
+func (p Part) GetValue(s token.Type) (int, error) {
 	switch s {
 	case "XPART":
 		return p.X, nil
