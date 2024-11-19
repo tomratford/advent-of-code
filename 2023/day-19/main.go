@@ -38,55 +38,173 @@ func main() {
 	}
 
 	fmt.Println(Part1(p))
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
 
-/* Any structs required for the challenge go here */
+type Range struct {
+	lower, upper int
+}
+
+func (r Range) len() int { return r.upper - r.lower }
+
+func (r1 Range) within(r2 Range) bool {
+	return !disjoint(r1, r2) && r2.lower < r1.lower && r1.upper < r2.upper
+}
+
+func disjoint(r1, r2 Range) bool { return r1.upper < r2.lower || r1.lower > r2.upper }
+
+func overlap(r1, r2 Range) []Range {
+	if r1.within(r2) {
+		return []Range{r2}
+	} else if disjoint(r1, r2) {
+		return []Range{r1, r2}
+	} else {
+		new_range := r1
+		return []Range{new_range}
+	}
+}
+
+type PartRange struct {
+	X, M, A, S Range
+}
+
+func NewPartRange() PartRange {
+	return PartRange{
+		Range{1, 4000},
+		Range{1, 4000},
+		Range{1, 4000},
+		Range{1, 4000},
+	}
+}
+
+func GetOverlap(p1, p2 PartRange) []PartRange {
+
+}
+
+func (p PartRange) Combinations() int {
+	return p.X.len() * p.M.len() * p.A.len() * p.M.len()
+}
 
 // Solution for Part 1 of the challenge
 func Part1(input ast.System) int {
 	score := 0
 
+	tree := makeTrees(input.Workflows)
 	for _, d := range input.Data {
 		key := "in"
-		for {
-			if key == token.ACCEPT {
-				score += d.Sum()
-				break
-			}
-			if key == token.REJECT {
-				break
-			}
-
-			ops := input.Workflows[key]
-			for _, op := range ops {
-				if op.Op_type == ast.REDIRECT {
-					key = op.Redirect
-					break
-				} else {
-					if op.Op_type == ast.GREATER_THAN {
-						if v, ok := d.GetValue(string(op.Part)); ok == nil && (v > op.Value) {
-							key = op.Redirect
-							break
-						}
-					} else {
-						if v, ok := d.GetValue(string(op.Part)); ok == nil && (v < op.Value) {
-							key = op.Redirect
-							break
-						}
-					}
-				}
-			}
+		for key != token.ACCEPT && key != token.REJECT {
+			key = tree[key](d)
+		}
+		if key == token.ACCEPT {
+			score += d.Sum()
 		}
 	}
 
 	return score
 }
 
+func makeTrees(input map[string][]ast.Operation) map[string]func(ast.Part) string {
+	tree := make(map[string]func(ast.Part) string, len(input))
+	for k, v := range input {
+		tree[k] = makeTree(v)
+	}
+	return tree
+}
+
+func makeTree(ops []ast.Operation) func(ast.Part) string {
+	return func(p ast.Part) string {
+		for _, op := range ops {
+			switch op.Op_type {
+			case ast.REDIRECT:
+				return op.Redirect
+			case ast.GREATER_THAN:
+				v, err := p.GetValue(op.Part)
+				if err != nil {
+					panic(err)
+				}
+				if v > op.Value {
+					return op.Redirect
+				}
+			case ast.LESS_THAN:
+				v, err := p.GetValue(op.Part)
+				if err != nil {
+					panic(err)
+				}
+				if v < op.Value {
+					return op.Redirect
+				}
+			}
+		}
+		return ""
+	}
+}
+
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input ast.System) int {
+	ranges := getPartRanges(input.Workflows, "in", NewPartRange())
+	fmt.Println(ranges)
+	return 0
+}
+
+func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange) []PartRange {
+	// Base case
+	if key == token.ACCEPT {
+		return []PartRange{parts}
+	} else if key == token.REJECT {
+		return []PartRange{}
+	}
+	// Recursive case
+	rtn := make([]PartRange, 0, len(input))
+	new_parts := parts
+	for _, op := range input[key] {
+		switch op.Op_type {
+		case ast.REDIRECT:
+			rtn = append(rtn, getPartRanges(input, op.Redirect, parts)...)
+		case ast.GREATER_THAN:
+			switch op.Part {
+			case token.XPART:
+				if new_parts.X.lower < op.Value+1 {
+					new_parts.X.lower = op.Value + 1
+				}
+			case token.MPART:
+				if new_parts.M.lower < op.Value+1 {
+					new_parts.M.lower = op.Value + 1
+				}
+			case token.APART:
+				if new_parts.A.lower < op.Value+1 {
+					new_parts.A.lower = op.Value + 1
+				}
+			case token.SPART:
+				if new_parts.S.lower < op.Value+1 {
+					new_parts.S.lower = op.Value + 1
+				}
+			}
+			rtn = append(rtn, getPartRanges(input, op.Redirect, new_parts)...)
+		case ast.LESS_THAN:
+			switch op.Part {
+			case token.XPART:
+				if new_parts.X.upper > op.Value-1 {
+					new_parts.X.upper = op.Value - 1
+				}
+			case token.MPART:
+				if new_parts.M.upper > op.Value-1 {
+					new_parts.M.upper = op.Value - 1
+				}
+			case token.APART:
+				if new_parts.A.upper > op.Value-1 {
+					new_parts.A.upper = op.Value - 1
+				}
+			case token.SPART:
+				if new_parts.S.upper > op.Value-1 {
+					new_parts.S.upper = op.Value - 1
+				}
+			}
+			rtn = append(rtn, getPartRanges(input, op.Redirect, new_parts)...)
+		}
+	}
+	return rtn
 }
 
 // Function to parse the input string (with newlines) into output of choice

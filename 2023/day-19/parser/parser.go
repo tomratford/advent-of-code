@@ -160,7 +160,6 @@ func (p *Parser) Parse() (ast.System, error) {
 			part.S = i
 			p.nextToken()
 
-			p.nextToken() // skip }
 			data = append(data, part)
 		}
 		if p.peekToken.Type == token.EOF {
