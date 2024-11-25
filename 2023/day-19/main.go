@@ -12,11 +12,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/tomratford/day-19/ast"
 	"github.com/tomratford/day-19/lexer"
 	"github.com/tomratford/day-19/parser"
 	"github.com/tomratford/day-19/token"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func main() {
@@ -49,24 +53,7 @@ type Range struct {
 
 func (r Range) String() string { return fmt.Sprintf("%d-%d", r.lower, r.upper) }
 
-func (r Range) len() int { return r.upper - r.lower }
-
-func (r1 Range) within(r2 Range) bool {
-	return !disjoint(r1, r2) && r2.lower < r1.lower && r1.upper < r2.upper
-}
-
-func disjoint(r1, r2 Range) bool { return r1.upper < r2.lower || r1.lower > r2.upper }
-
-func overlap(r1, r2 Range) []Range {
-	if r1.within(r2) {
-		return []Range{r2}
-	} else if disjoint(r1, r2) {
-		return []Range{r1, r2}
-	} else {
-		new_range := r1
-		return []Range{new_range}
-	}
-}
+func (r Range) len() int { return r.upper - r.lower + 1 }
 
 type PartRange struct {
 	X, M, A, S Range
@@ -157,15 +144,17 @@ func makeTree(ops []ast.Operation) func(ast.Part) string {
 
 // Solution for Part 2 of the challenge
 func Part2(input ast.System) int {
-	ranges := getPartRanges(input.Workflows, "in", NewPartRange())
-	fmt.Println(167409079868000)
+	ranges := getPartRanges(input.Workflows, "in", NewPartRange(), 0)
+	p := message.NewPrinter(language.English)
+	p.Println(167409079868000)
 	return ranges
 }
 
-func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange) int {
+func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange, depth int) int {
 	// Base case
 	if key == token.ACCEPT {
-		fmt.Println(parts)
+		p := message.NewPrinter(language.English)
+		p.Printf("%s%v !!%d\n", strings.Repeat(" ", depth), parts, parts.Combinations())
 		return parts.Combinations()
 	} else if key == token.REJECT {
 		return 0
@@ -203,48 +192,50 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 		}
 	}
 	rtn := 0
+	fmt.Printf("%s==%s==\n", strings.Repeat(" ", depth), key)
 	for _, op := range input[key] {
+		fmt.Printf("%s%v\n", strings.Repeat(" ", depth), parts)
 		switch op.Op_type {
 		case ast.REDIRECT:
-			rtn += getPartRanges(input, op.Redirect, parts)
+			rtn += getPartRanges(input, op.Redirect, parts, depth+1)
 		case ast.GREATER_THAN:
 			new_parts := parts
 			switch op.Part {
 			case token.XPART:
 				switch GTComp(&new_parts.X, &parts.X, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.MPART:
 				switch GTComp(&new_parts.M, &parts.M, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.APART:
 				switch GTComp(&new_parts.A, &parts.A, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.SPART:
 				switch GTComp(&new_parts.S, &parts.S, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			}
 		case ast.LESS_THAN:
@@ -253,38 +244,38 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 			case token.XPART:
 				switch LTComp(&new_parts.X, &parts.X, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.MPART:
 				switch LTComp(&new_parts.M, &parts.M, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.APART:
 				switch LTComp(&new_parts.A, &parts.A, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			case token.SPART:
 				switch LTComp(&new_parts.S, &parts.S, op.Value) {
 				case FALLTHROUGH:
-					return getPartRanges(input, op.Redirect, parts)
+					return getPartRanges(input, op.Redirect, parts, depth+1)
 				case IGNORE:
 					continue
 				case ADD:
-					rtn += getPartRanges(input, op.Redirect, new_parts)
+					rtn += getPartRanges(input, op.Redirect, new_parts, depth+1)
 				}
 			}
 		}
