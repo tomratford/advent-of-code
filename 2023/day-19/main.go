@@ -73,7 +73,7 @@ type PartRange struct {
 }
 
 func (p PartRange) String() string {
-	return fmt.Sprintf("X:%v,M:%v,A:%v,S:%v\n",p.X,p.M,p.A,p.S)
+	return fmt.Sprintf("X:%v,M:%v,A:%v,S:%v",p.X,p.M,p.A,p.S)
 }
 
 func NewPartRange() PartRange {
@@ -158,24 +158,24 @@ func makeTree(ops []ast.Operation) func(ast.Part) string {
 // Solution for Part 2 of the challenge
 func Part2(input ast.System) int {
 	ranges := getPartRanges(input.Workflows, "in", NewPartRange())
-	fmt.Println(ranges)
 	fmt.Println(167409079868000)
-	return AllCombinations(ranges)
+	return ranges
 }
 
-func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange) []PartRange {
+func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange) int {
 	// Base case
 	if key == token.ACCEPT {
-		return []PartRange{parts}
+		fmt.Println(parts)
+		return parts.Combinations()
 	} else if key == token.REJECT {
-		return []PartRange{}
+		return 0
 	}
 	// Recursive case
-	rtn := make([]PartRange, 0, len(input))
+	rtn := 0
 	for _, op := range input[key] {
 		switch op.Op_type {
 		case ast.REDIRECT:
-			rtn = append(rtn, getPartRanges(input, op.Redirect, parts)...)
+			rtn += getPartRanges(input, op.Redirect, parts)
 		case ast.GREATER_THAN:
 			new_parts := parts
 			switch op.Part {
@@ -183,24 +183,32 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 				if new_parts.X.lower < op.Value+1 {
 					new_parts.X.lower = op.Value + 1
 					parts.X.upper = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.MPART:
 				if new_parts.M.lower < op.Value+1 {
 					new_parts.M.lower = op.Value + 1
 					parts.M.upper = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.APART:
 				if new_parts.A.lower < op.Value+1 {
 					new_parts.A.lower = op.Value + 1
 					parts.A.upper = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.SPART:
 				if new_parts.S.lower < op.Value+1 {
 					new_parts.S.lower = op.Value + 1
 					parts.S.upper = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			}
-			rtn = append(rtn, getPartRanges(input, op.Redirect, new_parts)...)
+			rtn += getPartRanges(input, op.Redirect, new_parts)
 		case ast.LESS_THAN:
 			new_parts := parts
 			switch op.Part {
@@ -208,24 +216,32 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 				if new_parts.X.upper > op.Value-1 {
 					new_parts.X.upper = op.Value - 1
 					parts.X.lower = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.MPART:
 				if new_parts.M.upper > op.Value-1 {
 					new_parts.M.upper = op.Value - 1
 					parts.M.lower = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.APART:
 				if new_parts.A.upper > op.Value-1 {
 					new_parts.A.upper = op.Value - 1
 					parts.A.lower = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			case token.SPART:
 				if new_parts.S.upper > op.Value-1 {
 					new_parts.S.upper = op.Value - 1
 					parts.S.lower = op.Value
+				} else {
+					return getPartRanges(input, op.Redirect, parts)
 				}
 			}
-			rtn = append(rtn, getPartRanges(input, op.Redirect, new_parts)...)
+			rtn += getPartRanges(input, op.Redirect, new_parts)
 		}
 	}
 	return rtn
