@@ -77,7 +77,7 @@ func GetOverlap(p1, p2 PartRange) []PartRange {
 }
 
 func (p PartRange) Combinations() int {
-	return p.X.len() * p.M.len() * p.A.len() * p.M.len()
+	return p.X.len() * p.M.len() * p.A.len() * p.S.len()
 }
 
 func AllCombinations(ps []PartRange) int {
