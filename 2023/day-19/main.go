@@ -47,7 +47,7 @@ type Range struct {
 	lower, upper int
 }
 
-func (r Range) String() string { return fmt.Sprintf("%d-%d",r.lower,r.upper)}
+func (r Range) String() string { return fmt.Sprintf("%d-%d", r.lower, r.upper) }
 
 func (r Range) len() int { return r.upper - r.lower }
 
@@ -73,7 +73,7 @@ type PartRange struct {
 }
 
 func (p PartRange) String() string {
-	return fmt.Sprintf("X:%v,M:%v,A:%v,S:%v",p.X,p.M,p.A,p.S)
+	return fmt.Sprintf("X:%v,M:%v,A:%v,S:%v", p.X, p.M, p.A, p.S)
 }
 
 func NewPartRange() PartRange {
@@ -171,6 +171,37 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 		return 0
 	}
 	// Recursive case
+	const (
+		FALLTHROUGH = iota
+		ADD
+		IGNORE
+	)
+	GTComp := func(new, old *Range, value int) int {
+		if old.lower > value {
+			return FALLTHROUGH
+		} else {
+			if old.upper <= value {
+				return IGNORE
+			} else {
+				new.lower = value + 1
+				old.upper = value
+				return ADD
+			}
+		}
+	}
+	LTComp := func(new, old *Range, value int) int {
+		if old.upper < value {
+			return FALLTHROUGH
+		} else {
+			if old.lower >= value {
+				return IGNORE
+			} else {
+				new.upper = value - 1
+				old.lower = value
+				return ADD
+			}
+		}
+	}
 	rtn := 0
 	for _, op := range input[key] {
 		switch op.Op_type {
@@ -180,68 +211,82 @@ func getPartRanges(input map[string][]ast.Operation, key string, parts PartRange
 			new_parts := parts
 			switch op.Part {
 			case token.XPART:
-				if new_parts.X.lower < op.Value+1 {
-					new_parts.X.lower = op.Value + 1
-					parts.X.upper = op.Value
-				} else {
+				switch GTComp(&new_parts.X, &parts.X, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.MPART:
-				if new_parts.M.lower < op.Value+1 {
-					new_parts.M.lower = op.Value + 1
-					parts.M.upper = op.Value
-				} else {
+				switch GTComp(&new_parts.M, &parts.M, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.APART:
-				if new_parts.A.lower < op.Value+1 {
-					new_parts.A.lower = op.Value + 1
-					parts.A.upper = op.Value
-				} else {
+				switch GTComp(&new_parts.A, &parts.A, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.SPART:
-				if new_parts.S.lower < op.Value+1 {
-					new_parts.S.lower = op.Value + 1
-					parts.S.upper = op.Value
-				} else {
+				switch GTComp(&new_parts.S, &parts.S, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			}
-			rtn += getPartRanges(input, op.Redirect, new_parts)
 		case ast.LESS_THAN:
 			new_parts := parts
 			switch op.Part {
 			case token.XPART:
-				if new_parts.X.upper > op.Value-1 {
-					new_parts.X.upper = op.Value - 1
-					parts.X.lower = op.Value
-				} else {
+				switch LTComp(&new_parts.X, &parts.X, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.MPART:
-				if new_parts.M.upper > op.Value-1 {
-					new_parts.M.upper = op.Value - 1
-					parts.M.lower = op.Value
-				} else {
+				switch LTComp(&new_parts.M, &parts.M, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.APART:
-				if new_parts.A.upper > op.Value-1 {
-					new_parts.A.upper = op.Value - 1
-					parts.A.lower = op.Value
-				} else {
+				switch LTComp(&new_parts.A, &parts.A, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			case token.SPART:
-				if new_parts.S.upper > op.Value-1 {
-					new_parts.S.upper = op.Value - 1
-					parts.S.lower = op.Value
-				} else {
+				switch LTComp(&new_parts.S, &parts.S, op.Value) {
+				case FALLTHROUGH:
 					return getPartRanges(input, op.Redirect, parts)
+				case IGNORE:
+					continue
+				case ADD:
+					rtn += getPartRanges(input, op.Redirect, new_parts)
 				}
 			}
-			rtn += getPartRanges(input, op.Redirect, new_parts)
 		}
 	}
 	return rtn
