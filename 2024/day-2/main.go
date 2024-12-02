@@ -47,36 +47,8 @@ func main() {
 func Part1(input [][]int) []int {
 	rtn := make([]int, 0, len(input))
 	for index, i := range input {
-		maxdiff := 0
-		tmp := -1
-		for _, n := range i {
-			if tmp == -1 {
-				tmp = n
-			} else if tmp == n {
-				maxdiff = -1
-				break
-			} else {
-				if diff := n - tmp; diff > 0 {
-					if diff > maxdiff {
-						maxdiff = diff
-					}
-				} else {
-					diff = -diff
-					if diff > maxdiff {
-						maxdiff = diff
-					}
-				}
-				tmp = n
-			}
-		}
-		if 0 < maxdiff && maxdiff <= 3 && (slices.IsSorted(i)) {
-			// Safe
+		if CheckSlice(i) {
 			rtn = append(rtn, index)
-		} else {
-			i2 := Reverse(i)
-			if 0 < maxdiff && maxdiff <= 3 && (slices.IsSorted(i2)) {
-				rtn = append(rtn, index)
-			}
 		}
 	}
 	return rtn
@@ -90,44 +62,79 @@ func Reverse(s []int) []int {
 	return a
 }
 
+func CheckSlice(i []int) bool {
+	maxdiff := 0
+	tmp := -1
+	for _, n := range i {
+		if tmp == -1 {
+			tmp = n
+		} else if tmp == n {
+			maxdiff = -1
+			break
+		} else {
+			if diff := n - tmp; diff > 0 {
+				if diff > maxdiff {
+					maxdiff = diff
+				}
+			} else {
+				diff = -diff
+				if diff > maxdiff {
+					maxdiff = diff
+				}
+			}
+			tmp = n
+		}
+	}
+	if 0 < maxdiff && maxdiff <= 3 && (slices.IsSorted(i)) {
+		// Safe
+		return true
+	} else {
+		i2 := Reverse(i)
+		if 0 < maxdiff && maxdiff <= 3 && (slices.IsSorted(i2)) {
+			return true
+		}
+	}
+	return false
+}
+
 // Solution for Part 2 of the challenge
 func Part2(input [][]int, part1 []int) int {
-	remove := make(map[int]int)
-	for _, p := range part1 {
-		remove[p]++
-	}
+	for i, rpt := range input {
+		if slices.Contains(part1, i) {
+			continue
+		}
 
-	for i := 0; i < 5; i++ {
-		// remove one value from the list
-		removed := make([][]int, 0, len(input)-len(part1))
-		og_input := make([]int, 0, len(removed))
-
-		for j := range input {
-			report := make([]int, len(input[j]))
-			copy(report, input[j])
-			if _, ok := remove[j]; ok {
-				continue
-			} else {
-				var add []int
-				if i == 0 {
-					add = report[0:]
-				} else if i == 4 {
-					add = report[:4]
-				} else {
-					add = append(report[:i], report[(i+1):]...)
+		//fmt.Println(rpt, ":")
+		for j := range rpt {
+			rpt2 := make([]int, len(rpt))
+			copy(rpt2, rpt)
+			if j == 0 {
+				//fmt.Println(rpt[(j + 1):])
+				if CheckSlice(rpt2[(j + 1):]) {
+					part1 = append(part1, i)
+					break
 				}
-				removed = append(removed, add)
-				og_input = append(og_input, j)
+			} else if j == len(rpt)-1 {
+				//fmt.Println(rpt[:j])
+				if CheckSlice(rpt2[:j]) {
+					part1 = append(part1, i)
+					break
+				}
+				// else {
+				// 	fmt.Println(rpt)
+				// }
+			} else {
+				slc := append(rpt2[:j], rpt2[j+1:]...)
+				//fmt.Println(slc)
+				if CheckSlice(slc) {
+					part1 = append(part1, i)
+					break
+				}
 			}
 		}
-		sol := Part1(removed)
-		for _, s := range sol {
-			k := og_input[s]
-			fmt.Println(input[k], i)
-			remove[k]++
-		}
+		//fmt.Println("====")
 	}
-	return len(remove)
+	return len(part1)
 }
 
 // Function to parse the input string (with newlines) into output of choice
