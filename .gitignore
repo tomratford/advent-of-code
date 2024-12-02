@@ -11,3 +11,6 @@ tmp/
 .RData
 .Ruserdata
 .DS_Store
+
+input.txt
+sample*.txt
