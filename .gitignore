@@ -12,5 +12,7 @@ tmp/
 .Ruserdata
 .DS_Store
 
+go.sum
+
 input.txt
 sample*.txt
