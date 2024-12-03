@@ -12,9 +12,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
-	"unicode"
 )
 
 func main() {
@@ -47,34 +45,11 @@ func main() {
 func Part1(input string) int {
 	rtn := 0
 	for i := 0; i < len(input); i++ {
-		if input[i] == 'm' {
-			i++
-			if input[i] == 'u' {
-				i++
-				if input[i] == 'l' {
-					i++
-					if input[i] == '(' {
-						i++
-						var fst_num_str strings.Builder
-						for unicode.IsDigit(rune(input[i])) {
-							fst_num_str.WriteByte(input[i])
-							i++
-						}
-						if fst_num, err := strconv.Atoi(fst_num_str.String()); input[i] == ',' && err == nil {
-							i++
-							var snd_num_str strings.Builder
-							for unicode.IsDigit(rune(input[i])) {
-								snd_num_str.WriteByte(input[i])
-								i++
-							}
-							if snd_num, err := strconv.Atoi(snd_num_str.String()); input[i] == ')' && err == nil {
-								// fmt.Printf("mul(%d,%d)\n", fst_num, snd_num)
-								rtn += fst_num * snd_num
-							}
-						}
-					}
-				}
-			}
+		var fst_num, snd_num int
+		r := strings.NewReader(input[i:])
+		_, err := fmt.Fscanf(r, "mul(%d,%d)", &fst_num, &snd_num)
+		if err == nil {
+			rtn += fst_num * snd_num
 		}
 	}
 	return rtn
