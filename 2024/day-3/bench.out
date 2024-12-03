@@ -1,0 +1,9 @@
+goos: linux
+goarch: amd64
+pkg: day-3
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+BenchmarkPart1-2      	1000000000	         0.0007092 ns/op
+BenchmarkPart1_V1-2   	1000000000	         0.004479 ns/op
+BenchmarkPart1_V0-2   	1000000000	         0.0000778 ns/op
+PASS
+ok  	day-3	0.041s
