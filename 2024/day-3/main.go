@@ -10,8 +10,10 @@ usage:
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -44,18 +46,20 @@ func main() {
 // Solution for Part 1 of the challenge
 func Part1(input string) int {
 	rtn := 0
-	for i := 0; i < len(input); i++ {
-		if input[i] != 'm' {
-			continue
-		}
+
+	r, err := regexp.Compile(`mul\(\d+,\d+\)`)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, s := range r.FindAll([]byte(input), -1) {
 		var fst_num, snd_num int
-		r := strings.NewReader(input[i:])
-		n, err := fmt.Fscanf(r, "mul(%d,%d)", &fst_num, &snd_num)
+		_, err := fmt.Fscanf(bytes.NewReader(s), "mul(%d,%d)", &fst_num, &snd_num)
 		if err == nil {
 			rtn += fst_num * snd_num
-			i += n
 		}
 	}
+
 	return rtn
 }
 
