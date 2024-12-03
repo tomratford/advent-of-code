@@ -50,9 +50,10 @@ func Part1(input string) int {
 		}
 		var fst_num, snd_num int
 		r := strings.NewReader(input[i:])
-		_, err := fmt.Fscanf(r, "mul(%d,%d)", &fst_num, &snd_num)
+		n, err := fmt.Fscanf(r, "mul(%d,%d)", &fst_num, &snd_num)
 		if err == nil {
 			rtn += fst_num * snd_num
+			i += n
 		}
 	}
 	return rtn
