@@ -45,6 +45,9 @@ func main() {
 func Part1(input string) int {
 	rtn := 0
 	for i := 0; i < len(input); i++ {
+		if input[i] != 'm' {
+			continue
+		}
 		var fst_num, snd_num int
 		r := strings.NewReader(input[i:])
 		_, err := fmt.Fscanf(r, "mul(%d,%d)", &fst_num, &snd_num)
