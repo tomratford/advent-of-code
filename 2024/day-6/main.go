@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"image"
 	"os"
+	"sync"
 )
 
 func main() {
@@ -81,29 +82,55 @@ func Part1(objects map[image.Point]int, start image.Point) (int, map[image.Point
 }
 
 // Solution for Part 2 of the challenge
+type Counter struct {
+	mu    sync.Mutex
+	value int
+}
+
+func (c *Counter) Inc() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.value++
+}
+
+func (c *Counter) Value() int {
+	return c.value
+}
+
 func Part2(objects map[image.Point]int, route map[image.Point]int, start image.Point) int {
-	rtn := 0
+	c := &Counter{}
+
+	var wg sync.WaitGroup
+	wg.Add(len(route) - 1)
+
 	for new_obj := range route {
 		if new_obj.Eq(start) {
 			continue // Skip starting point
 		}
-		new_objects := make(map[image.Point]int)
-		for k := range objects {
-			new_objects[k]++
-		}
-		new_objects[new_obj]++
+		go func() {
+			new_objects := make(map[image.Point]int)
+			for k := range objects {
+				new_objects[k]++
+			}
+			new_objects[new_obj]++
 
-		rtn += DidItLoop(new_objects, start)
+			if DidItLoop(new_objects, start) {
+				c.Inc()
+			}
+			wg.Done()
+		}()
 	}
-	return rtn
+	wg.Wait()
+
+	return c.Value()
 }
 
-func DidItLoop(objects map[image.Point]int, start image.Point) int {
+func DidItLoop(objects map[image.Point]int, start image.Point) bool {
 	history := make(map[Guard]int)
 	g := Guard{start, NORTH}
 	for g.Pt.In(BOUNDS) {
 		if _, ok := history[g]; ok {
-			return 1 // it looped
+			return true // it looped
 		}
 		history[g]++
 
@@ -118,7 +145,7 @@ func DidItLoop(objects map[image.Point]int, start image.Point) int {
 
 		g.Pt = new_pt
 	}
-	return 0 // it just left the route as normal
+	return false // it just left the route as normal
 }
 
 // Function to parse the input string (with newlines) into output of choice
