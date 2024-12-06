@@ -33,8 +33,9 @@ func main() {
 		return
 	}
 
-	fmt.Println(Part1(objects, start))
-	fmt.Println(Part2(objects, start))
+	sol_p1, history := Part1(objects, start)
+	fmt.Println(sol_p1)
+	fmt.Println(Part2(objects, history, start))
 }
 
 // Structs and types
@@ -59,7 +60,7 @@ type Guard struct {
 var BOUNDS image.Rectangle
 
 // Solution for Part 1 of the challenge
-func Part1(objects map[image.Point]int, start image.Point) int {
+func Part1(objects map[image.Point]int, start image.Point) (int, map[image.Point]int) {
 
 	history := make(map[image.Point]int)
 
@@ -76,39 +77,48 @@ func Part1(objects map[image.Point]int, start image.Point) int {
 
 		g.Pt = new_pt
 	}
-	return len(history)
+	return len(history), history
 }
 
 // Solution for Part 2 of the challenge
-func Part2(objects map[image.Point]int, start image.Point) int {
+func Part2(objects map[image.Point]int, route map[image.Point]int, start image.Point) int {
+	rtn := 0
+	for new_obj := range route {
+		if new_obj.Eq(start) {
+			continue // Skip starting point
+		}
+		new_objects := make(map[image.Point]int)
+		for k := range objects {
+			new_objects[k]++
+		}
+		new_objects[new_obj]++
 
-	barrels := make(map[image.Point]int)
+		rtn += DidItLoop(new_objects, start)
+	}
+	return rtn
+}
+
+func DidItLoop(objects map[image.Point]int, start image.Point) int {
 	history := make(map[Guard]int)
-
 	g := Guard{start, NORTH}
 	for g.Pt.In(BOUNDS) {
+		if _, ok := history[g]; ok {
+			return 1 // it looped
+		}
 		history[g]++
 
 		new_pt := g.Pt.Add(g.Dir)
 
-		right := ROTATE_MAP[g.Dir]
-		for x := g.Pt; x.In(BOUNDS); x = x.Add(right) {
-			if _, ok := history[Guard{x, right}]; ok {
-				barrels[new_pt]++
-				break
-			}
-		}
-
 		if _, ok := objects[new_pt]; ok {
-			g.Dir = ROTATE_MAP[g.Dir]
+			new_dir := ROTATE_MAP[g.Dir]
+			new_pt = g.Pt.Add(new_dir)
+			g.Dir = new_dir
 			continue
 		}
 
 		g.Pt = new_pt
 	}
-	fmt.Println(history)
-	fmt.Println(barrels)
-	return len(barrels)
+	return 0 // it just left the route as normal
 }
 
 // Function to parse the input string (with newlines) into output of choice
