@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 // Structs and types
 
 type Calibration struct {
-	Target   int
+	Target int
 	Inputs []int
 }
 
@@ -63,8 +63,8 @@ func FindOperator(target int, got int, inputs []int) int {
 			return 0
 		}
 	}
-	plus := FindOperator(target, got + inputs[0], inputs[1:])
-	minus := FindOperator(target, got * inputs[0], inputs[1:])
+	plus := FindOperator(target, got+inputs[0], inputs[1:])
+	minus := FindOperator(target, got*inputs[0], inputs[1:])
 	if plus == target {
 		return plus
 	}
@@ -83,9 +83,9 @@ func Part2(input []Calibration) int {
 	return rtn
 }
 
-func Concat(x,y int) int {
+func Concat(x, y int) int {
 	n_digits := math.Floor(math.Log10(float64(y))) + 1
-	x = int(float64(x)*math.Pow(10,n_digits))
+	x = int(float64(x) * math.Pow(10, n_digits))
 	return x + y
 }
 
@@ -97,8 +97,8 @@ func FindOperator2(target int, got int, inputs []int) int {
 			return 0
 		}
 	}
-	plus := FindOperator2(target, got + inputs[0], inputs[1:])
-	minus := FindOperator2(target, got * inputs[0], inputs[1:])
+	plus := FindOperator2(target, got+inputs[0], inputs[1:])
+	minus := FindOperator2(target, got*inputs[0], inputs[1:])
 	concat := FindOperator2(target, Concat(got, inputs[0]), inputs[1:])
 	if plus == target {
 		return plus
