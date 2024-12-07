@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"strconv"
@@ -35,6 +36,7 @@ func main() {
 	}
 
 	fmt.Println(Part1(p))
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -73,8 +75,41 @@ func FindOperator(target int, got int, inputs []int) int {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input []Calibration) int {
+	rtn := 0
+	for _, i := range input {
+		rtn += FindOperator2(i.Target, 0, i.Inputs)
+	}
+	return rtn
+}
+
+func Concat(x,y int) int {
+	n_digits := math.Floor(math.Log10(float64(y))) + 1
+	x = int(float64(x)*math.Pow(10,n_digits))
+	return x + y
+}
+
+func FindOperator2(target int, got int, inputs []int) int {
+	if len(inputs) == 0 {
+		if got == target {
+			return target
+		} else {
+			return 0
+		}
+	}
+	plus := FindOperator2(target, got + inputs[0], inputs[1:])
+	minus := FindOperator2(target, got * inputs[0], inputs[1:])
+	concat := FindOperator2(target, Concat(got, inputs[0]), inputs[1:])
+	if plus == target {
+		return plus
+	}
+	if minus == target {
+		return minus
+	}
+	if concat == target {
+		return concat
+	}
+	return 0
 }
 
 // Function to parse the input string (with newlines) into output of choice
