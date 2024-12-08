@@ -34,7 +34,7 @@ func main() {
 	}
 
 	fmt.Println(Part1(p, antenna))
-	fmt.Println(Part2(p, antenna))
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -72,7 +72,7 @@ func Antinode(x, y image.Point) (image.Point, bool) {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input map[rune][]image.Point, antenna map[image.Point]rune) int {
+func Part2(input map[rune][]image.Point) int {
 	antinodes := make(map[image.Point]int)
 	for _, antennas := range input {
 		// Copy to avoid memory issues
