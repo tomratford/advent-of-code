@@ -106,6 +106,7 @@ func Score(digit, start, len int) int {
 func Part2(digits []int) int {
 	// Create doubly linked list
 	blocks := list.New()
+	free_id := -1 // To ensure comparison doesn't return true give each a unique negative id
 	for i, d := range digits {
 		if i%2 == 0 {
 			blocks.PushBack(Block{
@@ -114,9 +115,10 @@ func Part2(digits []int) int {
 			})
 		} else {
 			blocks.PushBack(Block{
-				Id:   -1,
+				Id:   free_id,
 				Size: d,
 			})
+			free_id--
 		}
 	}
 
@@ -130,12 +132,12 @@ func Part2(digits []int) int {
 outer:
 	for j := blocks.Back(); j != nil; j = j.Prev() {
 		for i := blocks.Front(); i != nil; i = i.Next() {
-			if i.Value == j.Value {
+			if i.Value == j.Value { // We can't overlap
 				break
 			}
 			ib := i.Value.(Block)
 			jb := j.Value.(Block)
-			if ib.Id == -1 { // Skip non-free blocks
+			if ib.Id < 0 { // Skip non-free blocks
 				if ib.Size > jb.Size {
 					// Split
 
@@ -179,12 +181,12 @@ outer:
 
 // Structs and types for Part 2
 type Block struct {
-	Id   int // -1 => free block
+	Id   int // < 0 => free block
 	Size int
 }
 
 func (b Block) String() string {
-	if b.Id == -1 {
+	if b.Id < 0 {
 		return strings.Repeat(".", b.Size)
 	} else {
 		return strings.Repeat(fmt.Sprint(b.Id), b.Size)
@@ -192,7 +194,7 @@ func (b Block) String() string {
 }
 
 func (b Block) Score(start int) int {
-	if b.Id == -1 {
+	if b.Id < 0 {
 		return 0
 	}
 	rtn := 0
