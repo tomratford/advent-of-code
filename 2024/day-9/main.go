@@ -137,7 +137,7 @@ outer:
 			}
 			ib := i.Value.(Block)
 			jb := j.Value.(Block)
-			if ib.Id < 0 { // Skip non-free blocks
+			if ib.Id < 0 && jb.Id >= 0 { // Skip non-free blocks
 				if ib.Size > jb.Size {
 					// Split
 
