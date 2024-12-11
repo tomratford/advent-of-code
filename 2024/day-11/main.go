@@ -36,8 +36,8 @@ func main() {
 		return
 	}
 
-	//fmt.Println(Part1(p, 25))
-	fmt.Println(Part2(p))
+	fmt.Println(Part1(p))
+	//fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -45,10 +45,25 @@ func main() {
 /* Any structs required for the challenge go here */
 
 // Solution for Part 1 of the challenge
-func Part1(input []float64, count int) int { // Dumb solution
+func Part1(input []float64) int {
+	lens := make(chan int, len(input))
+	for _, n := range input {
+		go func() {
+			lens <- Part1Inner([]float64{n})
+		}()
+	}
+	rtn := 0
+	for i := 0; i < len(input); i++ {
+		rtn += <-lens
+	}
+	close(lens)
+	return rtn
+}
+
+func Part1Inner(input []float64) int { // Dumb solution
 	ns := make([]float64, len(input))
 	copy(ns, input)
-	for blink := 0; blink < count; blink++ {
+	for blink := 0; blink < 25; blink++ {
 		i := 0
 		for i < len(ns) {
 			x := ns[i]
@@ -78,18 +93,7 @@ func Split(x float64, len float64) (float64, float64) {
 
 // Solution for Part 2 of the challenge
 func Part2(input []float64) int {
-	lens := make(chan int, len(input))
-	for _, n := range input {
-		go func() {
-			lens <- Part1([]float64{n}, 75)
-		}()
-	}
-	rtn := 0
-	for i := 0; i < len(input); i++ {
-		rtn += <-lens
-	}
-	close(lens)
-	return rtn
+	return 0
 }
 
 // Function to parse the input string (with newlines) into output of choice
