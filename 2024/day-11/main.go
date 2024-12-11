@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
+	"math/big"
 	"os"
 	"slices"
 	"strconv"
@@ -37,7 +38,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(Part1(p))
+	//fmt.Println(Part1(p))
 	fmt.Println(Part2(p))
 }
 
@@ -93,32 +94,43 @@ func Split(x float64, len float64) (float64, float64) {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input []float64) int {
-	stones := make(map[float64]int)
+func Part2(input []float64) string {
+	stones := make(map[float64]*big.Int)
 	for _, i := range input {
-		stones[i]++
+		if _, ok := stones[i]; !ok {
+			stones[i] = big.NewInt(1)
+		} else {
+			stones[i] = stones[i].Add(stones[i], big.NewInt(1))
+		}
 	}
 
 	for blinks := 0; blinks < 75; blinks++ {
 		curr_stones := maps.Clone(stones)
 		for n, v := range curr_stones {
 			left, right := NextState(n)
-			stones[left] += v
-			if right != -1 {
-				stones[right] += v
+
+			if _, ok := stones[left]; !ok {
+				stones[left] = big.NewInt(0)
 			}
-			stones[n] -= v
+			stones[left] = stones[left].Add(stones[left], v)
+			if right != -1 {
+				if _, ok := stones[right]; !ok {
+					stones[right] = big.NewInt(0)
+				}
+				stones[right] = stones[right].Add(stones[left], v)
+			}
+			stones[n].Sub(stones[n], v)
 		}
 	}
 
-	rtn := 0
+	var rtn big.Int
 	for n, v := range stones {
 		if n == -1 {
 			continue
 		}
-		rtn += v
+		(&rtn).Add(&rtn, v)
 	}
-	return rtn
+	return rtn.String()
 }
 
 func NextState(x float64) (float64, float64) {
