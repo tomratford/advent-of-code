@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"slices"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	fmt.Println(Part1(p))
-	//fmt.Println(Part2(p))
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -93,7 +94,41 @@ func Split(x float64, len float64) (float64, float64) {
 
 // Solution for Part 2 of the challenge
 func Part2(input []float64) int {
-	return 0
+	stones := make(map[float64]int)
+	for _, i := range input {
+		stones[i]++
+	}
+
+	for blinks := 0; blinks < 75; blinks++ {
+		curr_stones := maps.Clone(stones)
+		for n, v := range curr_stones {
+			left, right := NextState(n)
+			stones[left] += v
+			if right != -1 {
+				stones[right] += v
+			}
+			stones[n] -= v
+		}
+	}
+
+	rtn := 0
+	for n, v := range stones {
+		if n == -1 {
+			continue
+		}
+		rtn += v
+	}
+	return rtn
+}
+
+func NextState(x float64) (float64, float64) {
+	if x == 0 {
+		return 1, -1
+	} else if len := math.Floor(math.Log10(x) + 1); math.Mod(len, 2) == 0 {
+		return Split(x, len)
+	} else {
+		return x * 2024, -1
+	}
 }
 
 // Function to parse the input string (with newlines) into output of choice
