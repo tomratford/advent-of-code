@@ -46,7 +46,7 @@ func main() {
 	}
 
 	fmt.Println(Part1(p))
-	Part2(p)
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
@@ -100,7 +100,7 @@ func Part1(input []Robot) int {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input []Robot) {
+func Part2(input []Robot) int {
 	var wg sync.WaitGroup
 	wg.Add(10000)
 	for i := range 10000 {
@@ -114,6 +114,23 @@ func Part2(input []Robot) {
 		}()
 	}
 	wg.Wait()
+
+	// Little trick to get the correct image is to sort by file size.
+	// The smallest one is the tree because entropy
+	var smallest_size int64 = 999_999_999
+	smallest_i := 0
+	for i := range 10000 {
+		info, err := os.Stat(fmt.Sprintf("images/iter%.4d.png", i))
+		if err != nil {
+			panic(err)
+		}
+
+		if info.Size() < smallest_size {
+			smallest_i = i
+			smallest_size = info.Size()
+		}
+	}
+	return smallest_i
 }
 
 func OutputImage(input []image.Point, iter int) {
