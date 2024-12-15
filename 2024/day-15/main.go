@@ -51,21 +51,27 @@ var (
 var BOUNDS image.Rectangle
 
 type Robot struct {
-	pos image.Point
+	pos   image.Point
+	boxes map[image.Point]image.Point
 }
 
-func (r *Robot) move(dir image.Point, walls map[image.Point]int, boxes map[image.Point]image.Point) {
+func (r *Robot) move(dir image.Point, walls map[image.Point]int) {
 	newpos := r.pos.Add(dir)
 	if _, ok := walls[newpos]; ok {
 		return
 	}
-	if v, ok := boxes[newpos]; ok {
+	if v, ok := r.boxes[newpos]; ok {
 		if v.Eq(image.Point{}) {
-			if !move_box(newpos, dir, walls, boxes) {
+			if !move_box(newpos, dir, walls, r.boxes) {
 				return
 			}
 		} else { // Part 2 move
-			if !move_boxes(newpos, dir, walls, boxes) {
+			old_boxes := make(map[image.Point]image.Point)
+			for k, v := range r.boxes {
+				old_boxes[k] = v
+			}
+			if !move_boxes(newpos, dir, walls, r.boxes) {
+				r.boxes = old_boxes
 				return
 			}
 		}
@@ -91,6 +97,9 @@ func move_box(pos, dir image.Point, walls map[image.Point]int, boxes map[image.P
 
 func move_boxes(pos1, dir image.Point, walls map[image.Point]int, boxes map[image.Point]image.Point) bool {
 	pos2 := boxes[pos1]
+	if pos2.X < pos1.X {
+		pos1, pos2 = pos2, pos1 // Ensure pos1 is always the most left
+	}
 	newpos1 := pos1.Add(dir)
 	newpos2 := pos2.Add(dir)
 	if _, ok := walls[newpos1]; ok {
@@ -100,51 +109,45 @@ func move_boxes(pos1, dir image.Point, walls map[image.Point]int, boxes map[imag
 		return false
 	}
 
-	old_boxes := make(map[image.Point]image.Point)
-	for k, v := range boxes {
-		old_boxes[k] = v
-	}
-
-	newbox1, ok1 := boxes[newpos1]
+	_, ok1 := boxes[newpos1]
 	newbox2, ok2 := boxes[newpos2]
 
 	switch dir {
-	case LEFT, RIGHT:
-		if ok1 && ok2 { // we have hit a second box
-			if newbox1.Eq(pos1) || newbox1.Eq(pos2) {
-				if !move_boxes(newbox2, dir, walls, boxes) {
-					return false
-				}
-			} else {
-				if !move_boxes(newbox1, dir, walls, boxes) {
-					return false
-				}
+	case LEFT:
+		if ok1 {
+			if !move_boxes(newpos1, dir, walls, boxes) {
+				return false
+			}
+		}
+	case RIGHT:
+		if ok2 { // we have hit a second box
+			if !move_boxes(newpos2, dir, walls, boxes) {
+				return false
 			}
 		}
 	case UP, DOWN:
 		if ok1 && ok2 {
 			// Block perfectly above/below
-			if boxes[newbox1].Eq(newbox2) {
-				if !move_boxes(newbox1, dir, walls, boxes) {
+			if newbox2.Eq(newpos1) {
+				if !move_boxes(newpos1, dir, walls, boxes) {
 					return false
 				}
 			} else {
 				// two offcenter blocks above/below
-				left := move_boxes(newbox1, dir, walls, boxes)
-				right := move_boxes(newbox2, dir, walls, boxes)
+				left := move_boxes(newpos1, dir, walls, boxes)
+				right := move_boxes(newpos2, dir, walls, boxes)
 				if !(left && right) {
-					boxes = old_boxes
 					return false
 				}
 			}
 		} else if ok1 || ok2 {
 			// block imperfectly above/below
 			if ok1 {
-				if !move_boxes(newbox1, dir, walls, boxes) {
+				if !move_boxes(newpos1, dir, walls, boxes) {
 					return false
 				}
 			} else {
-				if !move_boxes(newbox2, dir, walls, boxes) {
+				if !move_boxes(newpos2, dir, walls, boxes) {
 					return false
 				}
 			}
@@ -161,10 +164,10 @@ func move_boxes(pos1, dir image.Point, walls map[image.Point]int, boxes map[imag
 // Solution for Part 1 of the challenge
 func Part1(walls map[image.Point]int, boxes map[image.Point]image.Point, robot Robot, instructions []image.Point) int {
 	for _, i := range instructions {
-		robot.move(i, walls, boxes)
+		robot.move(i, walls)
 	}
 	rtn := 0
-	for p := range boxes {
+	for p := range robot.boxes {
 		rtn += p.X + 100*p.Y
 	}
 	return rtn
@@ -177,18 +180,21 @@ func Part2(input string) int {
 	dbl_dot := strings.Replace(dbl_o, ".", "..", -1)
 	dbl_rbt := strings.Replace(dbl_dot, "@", "@.", -1)
 
-	walls, boxes, robot, instructions, _ := Parse(dbl_rbt)
+	walls, _, robot, instructions, _ := Parse(dbl_rbt)
 
 	//PrettyPrint(walls, boxes, robot)
 
-	for _, i := range instructions {
-		robot.move(i, walls, boxes)
-		//PrettyPrint(walls, boxes, robot)
-		//time.Sleep(50 * time.Millisecond)
+	for n, i := range instructions {
+		robot.move(i, walls)
+
+		if n > len(instructions)-5 {
+			//PrettyPrint(walls, robot.boxes, robot)
+			//time.Sleep(1 * time.Second)
+		}
 	}
 
 	rtn := 0
-	for p, v := range boxes {
+	for p, v := range robot.boxes {
 		if p.X < v.X {
 			rtn += p.X + 100*p.Y
 		}
@@ -265,6 +271,7 @@ func Parse(input string) (map[image.Point]int, map[image.Point]image.Point, Robo
 		x++
 	}
 
+	robot.boxes = boxes
 	BOUNDS = image.Rect(0, 0, max_x, y+1)
 
 	instructions := make([]image.Point, 0, len(sections[1]))
