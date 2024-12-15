@@ -14,7 +14,7 @@ import (
 	"image"
 	"os"
 	"strings"
-	"time"
+	//"time"
 )
 
 func main() {
@@ -107,41 +107,46 @@ func move_boxes(pos1, dir image.Point, walls map[image.Point]int, boxes map[imag
 
 	newbox1, ok1 := boxes[newpos1]
 	newbox2, ok2 := boxes[newpos2]
-	if ok1 && ok2 {
-		if newbox1.Eq(pos1) {
-			// moving horizontal, need to make sure we don't pick the box we are on (else infinite recursion)
-			if !move_boxes(newbox2, dir, walls, boxes) {
-				return false
-			}
-		} else if newbox2.Eq(pos2) {
-			// moving horizontal, need to make sure we don't pick the box we are on (else infinite recursion)
-			if !move_boxes(newbox1, dir, walls, boxes) {
-				return false
-			}
-		} else if boxes[newbox1].Eq(newbox2) {
-			// two boxes perfectly stacked vertically
-			if !move_boxes(newbox1, dir, walls, boxes) {
-				return false
-			}
-		} else {
-			// Two boxes imperfectly stacked
-			movebox1 := move_boxes(newbox1, dir, walls, boxes)
-			movebox2 := move_boxes(newbox2, dir, walls, boxes)
-			if (!movebox1) || (!movebox2) {
-				boxes = old_boxes
-				return false
+
+	switch dir {
+	case LEFT, RIGHT:
+		if ok1 && ok2 { // we have hit a second box
+			if newbox1.Eq(pos1) || newbox1.Eq(pos2) {
+				if !move_boxes(newbox2, dir, walls, boxes) {
+					return false
+				}
+			} else {
+				if !move_boxes(newbox1, dir, walls, boxes) {
+					return false
+				}
 			}
 		}
-	} else if ok1 { // single box imperfectly stacked
-		if !newbox1.Eq(pos1) {
-			if !move_boxes(newbox1, dir, walls, boxes) {
-				return false
+	case UP, DOWN:
+		if ok1 && ok2 {
+			// Block perfectly above/below
+			if boxes[newbox1].Eq(newbox2) {
+				if !move_boxes(newbox1, dir, walls, boxes) {
+					return false
+				}
+			} else {
+				// two offcenter blocks above/below
+				left := move_boxes(newbox1, dir, walls, boxes)
+				right := move_boxes(newbox2, dir, walls, boxes)
+				if !(left && right) {
+					boxes = old_boxes
+					return false
+				}
 			}
-		}
-	} else if ok2 {
-		if !newbox2.Eq(pos2) {
-			if !move_boxes(newbox2, dir, walls, boxes) {
-				return false
+		} else if ok1 || ok2 {
+			// block imperfectly above/below
+			if ok1 {
+				if !move_boxes(newbox1, dir, walls, boxes) {
+					return false
+				}
+			} else {
+				if !move_boxes(newbox2, dir, walls, boxes) {
+					return false
+				}
 			}
 		}
 	}
@@ -178,8 +183,8 @@ func Part2(input string) int {
 
 	for _, i := range instructions {
 		robot.move(i, walls, boxes)
-		PrettyPrint(walls, boxes, robot)
-		time.Sleep(50 * time.Millisecond)
+		//PrettyPrint(walls, boxes, robot)
+		//time.Sleep(50 * time.Millisecond)
 	}
 
 	rtn := 0
