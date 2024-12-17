@@ -12,6 +12,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -34,7 +35,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(Part1(p))
+	//fmt.Println(Part1(p))
 	fmt.Println(Part2(p))
 }
 
@@ -128,51 +129,51 @@ func (c *Computer) Output() string {
 
 // Solution for Part 1 of the challenge
 func Part1(c Computer) string {
+	//fmt.Printf("A: %v\nB: %v\nC: %v\n\n", strconv.FormatInt(int64(c.A), 2), strconv.FormatInt(int64(c.B), 2), strconv.FormatInt(int64(c.C), 2))
+
 	for c.NextInstruction() {
+		//fmt.Printf("A: %v\nB: %v\nC: %v\n\n", strconv.FormatInt(int64(c.A), 2), strconv.FormatInt(int64(c.B), 2), strconv.FormatInt(int64(c.C), 2))
 	}
 	return c.Output()
 }
 
 // Solution for Part 2 of the challenge
 func Part2(c Computer) int {
-	i := 35184386768896 + 14191002 // Starting value
-	want := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(c.ops)), ","), "[]")
-	old := i
+	i := 0
+	j := 2
 	for {
-		c2 := c
-		c2.A = i
-		got := Part1(c2)
-		if got == want {
-			break
-		}
-		// Find starting value
-		// if len(got) != len(want) {
-		// 	i *= 2 // Double output
-		// } else {
-		// 	fmt.Println(i)
-		// 	return 0
-		// }
-		if s := PrefixSize(got, want); s < 30 {
-			i += 2097152
-		} else {
-			fmt.Println(s, i, i-old)
-			old = i
-			i += 2097152
+		for {
+			if slices.Equal(CalcFromNumber(i), c.ops[len(c.ops)-j:]) {
+				if j == len(c.ops) {
+					return i
+				}
+				fmt.Print(i, "->")
+				i = i << 6
+				fmt.Println(i)
+				j += 2
+				break
+			}
+			i++
 		}
 	}
-	return i
 }
 
-func PrefixSize(x, y string) int {
-	best := 0
-	for i := 2; i < len(x); i += 2 {
-		if strings.HasPrefix(y, x[:i]) {
-			best = i
-		} else {
+// Reverse engineered from output
+func CalcFromNumber(A int) []int {
+	rtn := make([]int, 0)
+	for {
+		B := A % 8             // Last 3 digits of A
+		B = B ^ 5              // B ^ 101
+		C := A >> B            // C = A sans B digits
+		B = B ^ C              // B = B ^ C
+		A = A >> 3             // chop 3 off
+		B = B ^ 6              // B ^ 110
+		rtn = append(rtn, B%8) // Output
+		if A == 0 {            // Jump (or exit)
 			break
 		}
 	}
-	return best
+	return rtn
 }
 
 // Function to parse the input string (with newlines) into output of choice
