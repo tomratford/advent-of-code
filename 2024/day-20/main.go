@@ -12,6 +12,7 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 )
@@ -35,6 +36,8 @@ func main() {
 	}
 
 	fmt.Println(Part1(start, end, walls))
+
+	fmt.Println(Part2(start, end, walls))
 }
 
 // Structs and types
@@ -72,35 +75,26 @@ func Part1(start, end complex128, walls map[complex128]int) int {
 	route := getRoute(prev, n1, start, end)
 	rtn := make(map[int]int)
 	// Delete each wall adjacent to route
-	checked := make(map[complex128]int)
-	for _, r := range route {
-		fmt.Printf("%d\r", len(checked))
-		pts := []complex128{
-			r + UP,
-			r + DOWN,
-			r + RIGHT,
-			r + LEFT,
-		}
-
-		// similar to getNeighbours but want to keep walls to delete
-		cheats := slices.DeleteFunc(pts, func(p complex128) bool {
-			_, ok := walls[p]
-			_, ok2 := checked[p]
-			// deletes if true so negate whole
-			return !(!ok2 && ok && real(p) >= 0 && real(p) <= real(BOUNDS) && imag(p) >= 0 && imag(p) <= imag(BOUNDS))
-		})
-		for _, c := range cheats {
-			partial_n2, _, _ := Dijkstra(r, end, walls, getNeighboursCheat(c)) // in theory always smaller
-			n2 := dist[r] + partial_n2
-			checked[c]++
-			rtn[n1-n2]++
+	checked := make(map[[2]complex128]int)
+	for i, r1 := range route {
+		for _, r2 := range route[i:] {
+			// If we are only two square away (i.e. can delete a wall)
+			if x := r2 - r1; (math.Abs(real(x)) == 2 && imag(x) == 0) || (math.Abs(imag(x)) == 2 && real(x) == 0) {
+				// potential wall
+				w := complex((real(r1)+real(r2))/2, (imag(r1)+imag(r2))/2)
+				if _, ok := walls[w]; ok {
+					if _, ok := checked[[2]complex128{r1, r2}]; !ok {
+						dist_saved := dist[r2] - dist[r1] - 2
+						rtn[dist_saved]++
+						checked[[2]complex128{r1, r2}]++
+					}
+				}
+			}
 		}
 	}
-	//fmt.Println(rtn)
-
 	rtn2 := 0
 	for k, v := range rtn {
-		if k > 100 {
+		if k >= 100 {
 			rtn2 += v
 		}
 	}
@@ -185,8 +179,42 @@ func getNeighbours(pt complex128, walls map[complex128]int) []complex128 {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(start, end complex128, walls map[complex128]int) int {
+	// Get initial solution
+	n1, prev, dist := Dijkstra(start, end, walls, getNeighbours)
+	fmt.Println(n1)
+	route := getRoute(prev, n1, start, end)
+	rtn := make(map[int]int)
+	// Delete each wall adjacent to route
+	checked := make(map[[2]complex128]int)
+	for i, r1 := range route {
+		for _, r2 := range route[i:] {
+			if d := manhattanDistance(r2, r1); d <= 20 && d >= 2 {
+				if _, ok := checked[[2]complex128{r1, r2}]; !ok {
+					dist_saved := dist[r2] - dist[r1] - int(d)
+					rtn[dist_saved]++
+					checked[[2]complex128{r1, r2}]++
+				}
+			}
+		}
+	}
+	fmt.Println(rtn)
+	rtn2 := 0
+	for k, v := range rtn {
+		if k >= 100 {
+			rtn2 += v
+		}
+	}
+	return rtn2
+}
+
+func manhattanDistance(c1, c2 complex128) float64 {
+	// Extract real and imaginary parts
+	real1, imag1 := real(c1), imag(c1)
+	real2, imag2 := real(c2), imag(c2)
+
+	// Calculate Manhattan distance
+	return math.Abs(real1-real2) + math.Abs(imag1-imag2)
 }
 
 // Function to parse the input string (with newlines) into output of choice
