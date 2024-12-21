@@ -11,9 +11,8 @@ package main
 
 import (
 	"fmt"
-	"maps"
+	"math"
 	"os"
-	"slices"
 	"strings"
 )
 
@@ -37,23 +36,24 @@ func main() {
 
 	for k1 := range Keypad {
 		for k2 := range Keypad {
-			KeypadRoutes[[2]rune{k1, k2}] = get_route(Keypad, k1, k2)
+			Routes[[2]rune{k1, k2}] = Prune(get_route(Keypad, k1, k2), Keypad)
 		}
 	}
 
 	for k1 := range Dirpad {
 		for k2 := range Dirpad {
-			DirpadRoutes[[2]rune{k1, k2}] = get_route(Dirpad, k1, k2)
+			Routes[[2]rune{k1, k2}] = Prune(get_route(Dirpad, k1, k2), Dirpad)
 		}
 	}
 
-	fmt.Println(Part1(p[:1]))
+	fmt.Println(Part1(p))
+
+	fmt.Println(Part2(p))
 }
 
 // Structs and types
 
-var KeypadRoutes = map[[2]rune][]string{}
-var DirpadRoutes = map[[2]rune][]string{}
+var Routes = map[[2]rune][]string{}
 
 var Keypad = map[rune]complex128{
 	'7': 0 + 0i,
@@ -77,12 +77,13 @@ var Dirpad = map[rune]complex128{
 	'>': 2 + 1i,
 }
 
+// Find shortest routes between keypad values
 func get_route(pad map[rune]complex128, start, end rune) []string {
 	var inner func(c complex128, s string) []string
 	inner = func(c complex128, s string) []string {
 		exists := false
-		curr := pad[start] + c
-		for v := range maps.Values(pad) {
+		curr := pad[end] - c
+		for _, v := range pad {
 			if v == curr {
 				exists = true
 				break
@@ -91,7 +92,10 @@ func get_route(pad map[rune]complex128, start, end rune) []string {
 		if !exists {
 			return []string{}
 		} else if c == 0 {
-			return []string{s}
+			var b strings.Builder
+			b.WriteString(s)
+			b.WriteRune('A') // Append button presses
+			return []string{b.String()}
 		} else {
 			rtn := []string{}
 			if real(c) != 0 {
@@ -127,40 +131,6 @@ func get_route(pad map[rune]complex128, start, end rune) []string {
 	return inner(diff, "")
 }
 
-var SEEN = map[string][]string{}
-
-func GetRoutes(route_map map[[2]rune][]string, route string) []string {
-	if v, ok := SEEN[route]; ok {
-		return v
-	}
-	if len(route) == 1 {
-		return []string{route[:len(route)-1]}
-	} else {
-		code := [2]rune{rune(route[0]), rune(route[1])}
-		add := route_map[code]
-		rtn := []string{}
-		for _, a := range add {
-			for _, route := range GetRoutes(route_map, route[1:]) {
-				var b strings.Builder
-				b.WriteString(a)
-				b.WriteRune('A')
-				b.WriteString(route)
-				rtn = append(rtn, b.String())
-			}
-		}
-		SEEN[route] = rtn
-		return rtn
-	}
-}
-
-func unique[T comparable](s []T) []T {
-	rtn := make(map[T]int)
-	for _, t := range s {
-		rtn[t]++
-	}
-	return slices.Collect(maps.Keys(rtn))
-}
-
 // keep strings with mose repeated values
 func Prune(routes []string, pad map[rune]complex128) []string {
 	scores := make(map[int][]string)
@@ -177,7 +147,6 @@ func Prune(routes []string, pad map[rune]complex128) []string {
 			scores[changes] = []string{s}
 		}
 	}
-
 	// get min
 	min := -1
 	for s := range scores {
@@ -196,50 +165,80 @@ func Prune(routes []string, pad map[rune]complex128) []string {
 func Part1(input []string) int {
 	rtn := 0
 	for _, code := range input {
-		var b strings.Builder
-		b.WriteRune('A')
-		b.WriteString(code)
-		// Get instructions for robot at keypad
-		keypad_routes := Prune(GetRoutes(KeypadRoutes, b.String()), Dirpad)
-		fmt.Println(keypad_routes)
-		// Get instructions for robot at 1st dirpad
-		dirpad1_routes := make([]string, 0, len(keypad_routes)*3)
-		for _, kr := range keypad_routes {
-			dirpad1_routes = append(dirpad1_routes, GetRoutes(DirpadRoutes, kr)...)
-		}
-		dirpad1_routes = Prune(dirpad1_routes, Dirpad)
-		fmt.Println(dirpad1_routes)
-		// Get instructions for robot at 2nd dirpad
-		dirpad2_routes := make([]string, 0, len(dirpad1_routes)*3)
-		for _, dr := range dirpad1_routes {
-			dirpad2_routes = append(dirpad2_routes, GetRoutes(DirpadRoutes, dr)...)
-		}
-		dirpad2_routes = Prune(dirpad2_routes, Dirpad)
-		//fmt.Println(dirpad2_routes)
-		fmt.Println(len(dirpad2_routes))
-		// Get instructions for 'me' at the final dirpad
-		my_instructions := make([]string, 0, len(dirpad2_routes)*3)
-		for _, dr := range dirpad2_routes {
-			my_instructions = append(my_instructions, GetRoutes(DirpadRoutes, dr)...)
-		}
-		// Get smallest length instructions
-		smallest_len := 999_999_999
-		smallest_len_k := 0
-		for k, i := range my_instructions {
-			if len(i) < smallest_len {
-				smallest_len = len(i)
-				smallest_len_k = k
-			}
-		}
-		fmt.Println(code, my_instructions[smallest_len_k])
-		rtn += smallest_len
+		var num int
+		var whatever string
+		fmt.Sscanf(code, "%d%s", &num, &whatever)
+		x := Part1Inner(code, 3)
+		rtn += x * num
 	}
 	return rtn
 }
 
+func Part1Inner(s string, door int) int {
+	if door == 0 {
+		return len(s)
+	}
+
+	current := 'A'
+	route_len := 0
+	for _, c := range s {
+		got := Routes[[2]rune{current, c}]
+		min := math.MaxInt
+		for _, g := range got {
+			if got := Part1Inner(g, door-1); got < min {
+				min = got
+			}
+		}
+		route_len += min
+		current = c
+	}
+	return route_len
+}
+
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input []string) int {
+	rtn := 0
+	for _, code := range input {
+		var num int
+		var whatever string
+		fmt.Sscanf(code, "%d%s", &num, &whatever)
+		x := Part2Inner(code, 26)
+		rtn += x * num
+	}
+	return rtn
+}
+
+type Key struct {
+	string
+	int
+}
+
+var SEEN = map[Key]int{}
+
+func Part2Inner(s string, door int) int {
+	if v, ok := SEEN[Key{s, door}]; ok {
+		return v
+	}
+
+	if door == 0 {
+		return len(s)
+	}
+
+	current := 'A'
+	route_len := 0
+	for _, c := range s {
+		got := Routes[[2]rune{current, c}]
+		min := math.MaxInt
+		for _, g := range got {
+			if got := Part2Inner(g, door-1); got < min {
+				min = got
+			}
+		}
+		route_len += min
+		current = c
+	}
+	SEEN[Key{s, door}] = route_len
+	return route_len
 }
 
 // Function to parse the input string (with newlines) into output of choice
