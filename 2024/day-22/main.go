@@ -12,7 +12,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -35,9 +34,7 @@ func main() {
 		return
 	}
 
-	//fmt.Println(TrySequence(p, []int{-2, 1, -1, 3}))
-
-	//fmt.Println(Part1(p))
+	fmt.Println(Part1(p))
 	fmt.Println(Part2(p))
 }
 
@@ -54,89 +51,51 @@ func Part1(input []int) int {
 	return rtn
 }
 
-func Calc2000thNumber(x int) int {
-	for i := 0; i < 2000; i++ {
-		// first step
-		mix := x
-		x *= 1 << 6
-		mix = x ^ mix
-		x = mix % (1 << 24)
-		// snd step
-		mix = x
-		x /= (1 << 5)
-		mix = x ^ mix
-		x = mix % (1 << 24)
-		// 3rd step
-		mix = x
-		x *= (1 << 11)
-		mix = x ^ mix
-		x = mix % (1 << 24)
-	}
+func f(x int) int {
+	x = (x ^ x<<6) % (1 << 24)
+	x = (x ^ x>>5) % (1 << 24)
+	return (x ^ x<<11) % (1 << 24)
+}
 
+var SEQUENCES = map[int][]int{}
+
+func Calc2000thNumber(x int) int {
+	store := x
+	seq := make([]int, 2000)
+	for i := 0; i < 2000; i++ {
+		x = f(x)
+		seq[i] = x
+	}
+	SEQUENCES[store] = seq
 	return x
 }
 
 // Solution for Part 2 of the challenge
+var FOURS = make(map[[4]int]int)
+
 func Part2(input []int) int {
-	bananas := make(chan int, 19*19*19*19)
-	for i := -9; i < 10; i++ {
-		for j := -9; j < 10; j++ {
-			for k := -9; k < 10; k++ {
-				for z := -9; z < 10; z++ {
-					go func() {
-						bananas <- TrySequence(input, []int{i, j, k, z})
-					}()
-				}
+	for _, n := range input {
+		seen := make(map[[4]int]int)
+		sequence := SEQUENCES[n]
+		for i := 4; i < 2000; i++ {
+			last4 := [4]int{sequence[i-4]%10 - sequence[i-3]%10,
+				sequence[i-3]%10 - sequence[i-2]%10,
+				sequence[i-2]%10 - sequence[i-1]%10,
+				sequence[i-1]%10 - sequence[i]%10,
+			}
+			if _, ok := seen[last4]; !ok {
+				seen[last4]++
+				FOURS[last4] += sequence[i] % 10
 			}
 		}
 	}
-	best := 0
-	for i := 0; i < 19*19*19*19; i++ {
-		if got := <-bananas; got > best {
-			best = got
+	max := 0
+	for _, v := range FOURS {
+		if v > max {
+			max = v
 		}
 	}
-	return best
-}
-
-func TrySequence(input []int, seq []int) int {
-	rtn := 0
-	for _, i := range input {
-		rtn += GetNumAfterSequence(i, seq)
-	}
-	return rtn
-}
-
-func GetNumAfterSequence(x int, seq []int) int {
-	lastfour := make([]int, 0, 4)
-	lastx := x
-	for i := 0; i < 2000; i++ {
-		// first step
-		mix := x
-		x *= 1 << 6
-		mix = x ^ mix
-		x = mix % (1 << 24)
-		// snd step
-		mix = x
-		x /= (1 << 5)
-		mix = x ^ mix
-		x = mix % (1 << 24)
-		// 3rd step
-		mix = x
-		x *= (1 << 11)
-		mix = x ^ mix
-		x = mix % (1 << 24)
-		if len(lastfour) < 4 {
-			lastfour = append(lastfour, x%10-lastx%10)
-		} else {
-			lastfour = append(lastfour[1:], x%10-lastx%10)
-		}
-		if slices.Equal(lastfour, seq) {
-			return x % 10
-		}
-		lastx = x
-	}
-	return 0
+	return max
 }
 
 // Function to parse the input string (with newlines) into output of choice
