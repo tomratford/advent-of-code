@@ -34,7 +34,9 @@ func main() {
 		return
 	}
 
+	fmt.Println(p)
 	fmt.Println(Part1(p))
+	Part2(p)
 }
 
 // Structs and types
@@ -79,12 +81,27 @@ func Intersect[T comparable](s1, s2 *Set[T]) *Set[T] {
 	return s
 }
 
+func Union[T comparable](s1, s2 *Set[T]) *Set[T] {
+	s := NewSet[T]()
+	for k1 := range s1.data {
+		s.Add(k1)
+	}
+	for k2 := range s2.data {
+		s.Add(k2)
+	}
+	return s
+}
+
 func (s *Set[T]) Values() []T {
 	rtn := make([]T, 0, len(s.data))
 	for k := range s.data {
 		rtn = append(rtn, k)
 	}
 	return rtn
+}
+
+func (s *Set[T]) Delete(v T) {
+	delete(s.data, v)
 }
 
 func (s *Set[T]) ContainsFunc(f func(V T) bool) bool {
@@ -125,8 +142,40 @@ func Part1(input map[string][]string) int {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+func Part2(input map[string][]string) {
+	init_P := NewSet[string]()
+	for k := range input {
+		init_P.Add(k)
+	}
+	c := make(chan *Set[string])
+	go BronKersch(input, NewSet[string](), init_P, NewSet[string](), c)
+
+	max_len := 0
+	var max *Set[string]
+	for {
+		select {
+		case s := <-c:
+			if s.Len() > max_len {
+				max_len = s.Len()
+				max = s
+				v := max.Values()
+				slices.Sort(v)
+				fmt.Println(strings.Join(v, ","))
+			}
+		}
+	}
+	return
+}
+
+func BronKersch(input map[string][]string, R, P, X *Set[string], c chan *Set[string]) {
+	if P.Len() == 0 && X.Len() == 0 {
+		c <- R
+	}
+	for _, p := range P.Values() {
+		go BronKersch(input, Union(R, NewSet(p)), Intersect(P, NewSet[string](input[p]...)), Intersect(X, NewSet[string](input[p]...)), c)
+		P.Delete(p)
+		X.Add(p)
+	}
 }
 
 // Function to parse the input string (with newlines) into output of choice
