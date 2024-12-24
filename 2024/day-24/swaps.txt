@@ -1,0 +1,102 @@
+Bad number: 6
+Can swap output on {y07 AND x07 -> pmc} and {jtg OR hgj -> z07} !
+Can swap output on {y07 AND x07 -> hgj} and {x06 AND y06 -> z07}
+Can swap output on {y07 AND x07 -> z08} and {rkw XOR whp -> z07} !
+Can swap output on {y07 AND x07 -> rkw} and {wnn OR gmt -> z07} !
+Can swap output on {y07 AND x07 -> gmt} and {pmc XOR mvw -> z07} !
+Can swap output on {jtg OR hgj -> z07} and {y07 AND x07 -> pmc} !
+Can swap output on {x06 AND y06 -> z07} and {y07 AND x07 -> hgj} !
+Can swap output on {rkw XOR whp -> z07} and {y07 AND x07 -> z08} !
+Can swap output on {wnn OR gmt -> z07} and {y07 AND x07 -> rkw} !
+Can swap output on {pmc XOR mvw -> z07} and {y07 AND x07 -> gmt} ! <-- THIS ONE
+Bad number: 7
+Can swap output on {y07 AND x07 -> jtg} and {btp AND hsm -> z07}
+Can swap output on {y07 AND x07 -> mvw} and {x07 XOR y07 -> z07}
+Can swap output on {y07 AND x07 -> pmc} and {jtg OR hgj -> z07} !
+Can swap output on {y07 AND x07 -> hgj} and {x06 AND y06 -> z07} !
+Can swap output on {y07 AND x07 -> z08} and {rkw XOR whp -> z07} !
+Can swap output on {y07 AND x07 -> rkw} and {wnn OR gmt -> z07} !
+Can swap output on {y07 AND x07 -> wnn} and {mvw AND pmc -> z07}
+Can swap output on {y07 AND x07 -> whp} and {y08 XOR x08 -> z07}
+Can swap output on {y07 AND x07 -> gmt} and {pmc XOR mvw -> z07} !
+Can swap output on {btp AND hsm -> z07} and {y07 AND x07 -> jtg}
+Can swap output on {x07 XOR y07 -> z07} and {y07 AND x07 -> mvw}
+Can swap output on {jtg OR hgj -> z07} and {y07 AND x07 -> pmc} !
+Can swap output on {x06 AND y06 -> z07} and {y07 AND x07 -> hgj} !
+Can swap output on {rkw XOR whp -> z07} and {y07 AND x07 -> z08} !
+Can swap output on {wnn OR gmt -> z07} and {y07 AND x07 -> rkw} !
+Can swap output on {mvw AND pmc -> z07} and {y07 AND x07 -> wnn}
+Can swap output on {y08 XOR x08 -> z07} and {y07 AND x07 -> whp}
+Can swap output on {pmc XOR mvw -> z07} and {y07 AND x07 -> gmt} !
+Bad number: 11
+Can swap output on {csm AND cbj -> z11} and {cbj XOR csm -> dnt}
+Can swap output on {y11 XOR x11 -> z11} and {cbj XOR csm -> qjj}
+Can swap output on {y11 XOR x11 -> cbj} and {x11 AND y11 -> qjj}
+Can swap output on {tgs XOR mhf -> z11} and {cbj XOR csm -> z12}
+Can swap output on {y12 XOR x12 -> z11} and {cbj XOR csm -> tgs}
+Can swap output on {y12 XOR x12 -> cbj} and {x11 AND y11 -> tgs}
+Can swap output on {cbj XOR csm -> dnt} and {csm AND cbj -> z11}
+Can swap output on {cbj XOR csm -> qjj} and {y11 XOR x11 -> z11}
+Can swap output on {cbj XOR csm -> z12} and {tgs XOR mhf -> z11}
+Can swap output on {cbj XOR csm -> tgs} and {y12 XOR x12 -> z11}
+Can swap output on {cbj XOR csm -> mhf} and {dnt OR qjj -> z11}
+Can swap output on {dnt OR qjj -> z11} and {cbj XOR csm -> mhf}
+Can swap output on {x11 AND y11 -> qjj} and {y11 XOR x11 -> cbj} <--- THIS ONE
+Can swap output on {x11 AND y11 -> tgs} and {y12 XOR x12 -> cbj}
+Bad number: 17
+Can swap output on {hnn OR jkw -> khk} and {x18 AND y18 -> nff} !
+Can swap output on {hnn OR jkw -> stg} and {nff AND hch -> nff}
+Can swap output on {hnn OR jkw -> z18} and {khk OR stg -> nff}
+Can swap output on {dmn XOR dsj -> khk} and {x18 AND y18 -> z19} !
+Can swap output on {dmn XOR dsj -> stg} and {nff AND hch -> z19}
+Can swap output on {dmn XOR dsj -> z18} and {khk OR stg -> z19} !
+Can swap output on {hch XOR nff -> khk} and {x18 AND y18 -> dmn} !
+Can swap output on {hch XOR nff -> stg} and {nff AND hch -> dmn}
+Can swap output on {hch XOR nff -> z18} and {khk OR stg -> dmn} ! <-- THIS ONE
+Can swap output on {x18 AND y18 -> nff} and {hnn OR jkw -> khk} !
+Can swap output on {x18 AND y18 -> z19} and {dmn XOR dsj -> khk} !
+Can swap output on {x18 AND y18 -> dmn} and {hch XOR nff -> khk} !
+Can swap output on {x18 AND y18 -> hnn} and {x17 AND y17 -> khk} !
+Can swap output on {nff AND hch -> nff} and {hnn OR jkw -> stg}
+Can swap output on {nff AND hch -> z19} and {dmn XOR dsj -> stg}
+Can swap output on {nff AND hch -> dmn} and {hch XOR nff -> stg}
+Can swap output on {nff AND hch -> hnn} and {x17 AND y17 -> stg}
+Can swap output on {khk OR stg -> nff} and {hnn OR jkw -> z18}
+Can swap output on {khk OR stg -> z19} and {dmn XOR dsj -> z18} !
+Can swap output on {khk OR stg -> dmn} and {hch XOR nff -> z18} !
+Can swap output on {khk OR stg -> hnn} and {x17 AND y17 -> z18}
+Can swap output on {x17 AND y17 -> khk} and {x18 AND y18 -> hnn}
+Can swap output on {x17 AND y17 -> stg} and {nff AND hch -> hnn}
+Can swap output on {x17 AND y17 -> z18} and {khk OR stg -> hnn}
+Bad number: 18
+Can swap output on {ksf AND bqf -> khk} and {x18 AND y18 -> jkw}
+Can swap output on {hnn OR jkw -> khk} and {x18 AND y18 -> nff} !
+Can swap output on {dmn XOR dsj -> khk} and {x18 AND y18 -> z19} !
+Can swap output on {dmn XOR dsj -> z18} and {khk OR stg -> z19} !
+Can swap output on {hch XOR nff -> khk} and {x18 AND y18 -> dmn} !
+Can swap output on {hch XOR nff -> z18} and {khk OR stg -> dmn} !
+Can swap output on {y18 XOR x18 -> khk} and {x18 AND y18 -> hch}
+Can swap output on {x18 AND y18 -> jkw} and {ksf AND bqf -> khk}
+Can swap output on {x18 AND y18 -> nff} and {hnn OR jkw -> khk} !
+Can swap output on {x18 AND y18 -> z19} and {dmn XOR dsj -> khk} !
+Can swap output on {x18 AND y18 -> dmn} and {hch XOR nff -> khk} !
+Can swap output on {x18 AND y18 -> hch} and {y18 XOR x18 -> khk}
+Can swap output on {x18 AND y18 -> hnn} and {x17 AND y17 -> khk} !
+Can swap output on {x18 AND y18 -> dsj} and {x19 XOR y19 -> khk}
+Can swap output on {khk OR stg -> z19} and {dmn XOR dsj -> z18} !
+Can swap output on {khk OR stg -> dmn} and {hch XOR nff -> z18} !
+Can swap output on {khk OR stg -> dsj} and {x19 XOR y19 -> z18}
+Can swap output on {x17 AND y17 -> khk} and {x18 AND y18 -> hnn}
+Can swap output on {x19 XOR y19 -> khk} and {x18 AND y18 -> dsj}
+Can swap output on {x19 XOR y19 -> z18} and {khk OR stg -> dsj}
+Bad number: 34
+Can swap output on {qnm AND rfk -> z36} and {mbw XOR kth -> z35}
+Can swap output on {qnm AND rfk -> qnm} and {wmn OR gpc -> z35}
+Can swap output on {qnm AND rfk -> mbw} and {rct OR cfk -> z35}
+Can swap output on {qnm AND rfk -> wmn} and {y34 AND x34 -> z35}
+Can swap output on {qnm AND rfk -> cfk} and {qnm XOR rfk -> z35}
+Can swap output on {mbw XOR kth -> z35} and {qnm AND rfk -> z36}
+Can swap output on {wmn OR gpc -> z35} and {qnm AND rfk -> qnm}
+Can swap output on {rct OR cfk -> z35} and {qnm AND rfk -> mbw}
+Can swap output on {y34 AND x34 -> z35} and {qnm AND rfk -> wmn}
+Can swap output on {qnm XOR rfk -> z35} and {qnm AND rfk -> cfk} <-- THIS ONE
