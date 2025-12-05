@@ -4,6 +4,7 @@ Advent of code, by year completed.
 
 | Year | Lang | Progress |
 | --- | --- | --- |
+| 2025 | Julia | 5/12 |
 | 2024 | Go | 25/25 |
 | 2023 | Go (mainly) | 21/25 |
 | 2022 | Assorted (see [2022](/2022)) | 7/25 |
