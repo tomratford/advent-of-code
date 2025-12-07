@@ -39,9 +39,11 @@ end
 function solve(input::Dict{Coord, Char})
     part1 = 0
     beams = Coord[]
+    start_x = 0
     visited = Dict{Coord, Int}()
     for (k,v) in input
         if v == 'S'
+            start_x = k.x
             append!(beams, k)
         end
     end
@@ -60,29 +62,30 @@ function solve(input::Dict{Coord, Char})
         end
     end
     
-    part2 = 0
-    sort_visited = sort(collect(keys(visited)), by = x -> x.y)
-    visited[sort_visited[1]] = 1
-    for v in sort_visited
-        newkey1 = v + Coord(-1,2)
-        newkey2 = v + Coord(1,2)
+    lowest_x = minimum([a.x for (a,_) in input])
+    biggest_x = maximum([a.x for (a,_) in input])
 
-        if haskey(visited, newkey1)
-            visited[newkey1] += visited[v]
-        else
-            part2 += visited[v]
-        end
+    lowest_y = minimum([a.y for (a,_) in input])
+    biggest_y = maximum([a.y for (a,_) in input])
 
-        if haskey(visited, newkey2)
-            visited[newkey2] += visited[v]
-        else
-            part2 += visited[v]
+    xs = lowest_x+1:biggest_x+1
+    ys = lowest_y+1:biggest_y+1
+
+    scores = zeros(length(xs))
+    scores[start_x] = 1
+    for j in ys
+        for i in xs
+            c = Coord(i,j)
+            if haskey(input, c)
+                if input[c] == '^'
+                    scores[c.x - 1] += scores[c.x]
+                    scores[c.x + 1] += scores[c.x]
+                    scores[c.x] = 0
+                end
+            end
         end
     end
-    # println(visited)
-    # for (_,v) in visited
-    #     part2 += v
-    # end
+    part2 = sum(scores)
 
     @printf("Part 1: %d\nPart 2: %d\n", part1, part2)
 end
