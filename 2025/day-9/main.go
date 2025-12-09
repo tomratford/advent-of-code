@@ -10,10 +10,12 @@ usage:
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"image"
 	"math"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -67,12 +69,61 @@ func Part1(input []image.Point) int {
 
 // Implement my own comparison because go's doesn't include eq
 
-func OnBorder(r, s image.Rectangle) bool {
-	if r.In(s) {
-		return (r.Min.X == s.Min.X || r.Max.X == s.Max.X) && (r.Min.Y == s.Min.Y || r.Max.Y == s.Max.Y)
-	} else {
-		return false
+func RectPoints(r image.Rectangle) []image.Point {
+	r = r.Canon()
+	pts := make([]image.Point, 0)
+	for i := r.Min.X; i <= r.Max.X; i++ {
+		for j := r.Min.Y; j <= r.Max.Y; j++ {
+			pts = append(pts, image.Pt(i, j))
+		}
 	}
+	return pts
+}
+
+func PointIn(p image.Point, r image.Rectangle) bool {
+	return r.Min.X <= p.X && p.X <= r.Max.X &&
+		r.Min.Y <= p.Y && p.Y <= r.Max.Y
+}
+
+func GetPoints(points []image.Point, edges []image.Rectangle) []image.Point {
+	min_x := slices.MinFunc(points, func(a, b image.Point) int {
+		return cmp.Compare(a.X, b.X)
+	}).X
+	min_y := slices.MinFunc(points, func(a, b image.Point) int {
+		return cmp.Compare(a.Y, b.Y)
+	}).Y
+	max_x := slices.MaxFunc(points, func(a, b image.Point) int {
+		return cmp.Compare(a.X, b.X)
+	}).X
+	max_y := slices.MaxFunc(points, func(a, b image.Point) int {
+		return cmp.Compare(a.Y, b.Y)
+	}).Y
+
+	rtn := make([]image.Point, 0)
+	for j := min_y; j <= max_y; j++ {
+		edge_hit := make([]image.Rectangle, 0)
+		for i := min_x; i <= max_x; i++ {
+			p := image.Pt(i, j)
+			for _, e := range edges {
+				if PointIn(p, e) && !slices.Contains(edge_hit, e) {
+					edge_hit = append(edge_hit, e)
+				}
+			}
+			if len(edge_hit)%2 == 1 {
+				rtn = append(rtn, p)
+			}
+			//fmt.Println(p, edge_hit)
+		}
+	}
+
+	for _, e := range edges {
+		for _, p := range RectPoints(e) {
+			if !slices.Contains(rtn, p) {
+				rtn = append(rtn, p)
+			}
+		}
+	}
+	return rtn
 }
 
 // Solution for Part 2 of the challenge
@@ -89,22 +140,26 @@ func Part2(input []image.Point) int {
 	for i := range input[1:] {
 		edges = append(edges, image.Rectangle{input[i], input[i+1]}.Canon())
 	}
+	edges = append(edges, image.Rectangle{input[0], input[len(input)-1]}.Canon())
+
+	interior := GetPoints(input, edges)
+
+	//fmt.Println(interior)
 
 	part2 := 0
+Exit:
 	for _, r := range rects {
-		ecount := 0
-		for _, e := range edges {
-			if OnBorder(e, r) {
-				ecount++
+		r_int := RectPoints(r)
+		for _, p := range r_int {
+			if !slices.Contains(interior, p) {
+				continue Exit
 			}
 		}
-		if ecount >= 3 {
-			p := r.Size()
-			size := int((math.Abs(float64(p.X)) + 1.0) * (math.Abs((float64(p.Y))) + 1.0))
-			if size > part2 {
-				fmt.Println(p, r)
-				part2 = size
-			}
+		p := r.Size()
+		size := int((math.Abs(float64(p.X)) + 1.0) * (math.Abs((float64(p.Y))) + 1.0))
+		if size > part2 {
+			//fmt.Println(p, r)
+			part2 = size
 		}
 	}
 	return part2
