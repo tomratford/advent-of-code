@@ -57,7 +57,7 @@ func Toggle(current []bool, swaps []int) []bool {
 func Score(want, got []bool) int {
 	score := 0
 	for i := range want {
-		if want & got {
+		if want[i] && got[i] {
 			score++ // dont penalise going backwards?
 		}
 	}
