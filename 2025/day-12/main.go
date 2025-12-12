@@ -14,6 +14,7 @@ import (
 	"image"
 	"iter"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -28,13 +29,14 @@ func main() {
 		return
 	}
 
-	p, err := Parse(string(input))
+	b, s, err := Parse(string(input))
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println(p)
+	fmt.Println(b, s)
+	fmt.Println(Part1(b, s))
 }
 
 // Structs and types
@@ -104,7 +106,11 @@ func (b Board) SubBoards(s Shape) iter.Seq[SubBoard] {
 }
 
 func (b Board) CanFit() bool {
-
+	tmp := 0
+	for i, n := range b.Shapes {
+		tmp += n * SHAPES[i].Size
+	}
+	return tmp < b.Size
 }
 
 type Shape struct {
@@ -137,6 +143,40 @@ func Part2(input string) int {
 }
 
 // Function to parse the input string (with newlines) into output of choice
-func Parse(input string) (string, error) {
-	return input, nil
+func Parse(input string) ([]image.Point, [][6]int, error) {
+	sections := strings.Split(input, "\n\n")
+	points := make([]image.Point, 0)
+	shapes := make([][6]int, 0)
+	for i, s := range sections {
+		if s == "" {
+			continue
+		}
+		if i < 6 {
+			// shape
+			sh := Shape{}
+			for _, c := range s {
+				if c == '#' {
+					sh.Size++
+				}
+			}
+			SHAPES[i] = sh
+		} else {
+			// box
+			lines := strings.Split(s, "\n")
+			for _, l := range lines {
+				if l == "" {
+					continue
+				}
+				p := image.Point{}
+				sh := [6]int{}
+				_, err := fmt.Sscanf(l, "%dx%d: %d %d %d %d %d %d", &p.X, &p.Y, &sh[0], &sh[1], &sh[2], &sh[3], &sh[4], &sh[5])
+				if err != nil {
+					return []image.Point{}, [][6]int{}, err
+				}
+				points = append(points, p)
+				shapes = append(shapes, sh)
+			}
+		}
+	}
+	return points, shapes, nil
 }
