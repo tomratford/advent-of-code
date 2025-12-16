@@ -11,10 +11,13 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/aclements/go-z3/z3"
 )
 
 func main() {
@@ -36,32 +39,42 @@ func main() {
 	}
 
 	fmt.Println(Part1(p))
+	fmt.Println(Part2(p))
 }
+
+type Button = func([]bool) []bool
 
 // Structs and types
 type Machine struct {
-	Indicator []bool
-	Length    int
-	Buttons   [][]int
-	Joltage   []int
+	Indicator  []bool
+	Length     int
+	Buttons    []Button
+	RawButtons [][]int
+	Joltage    []int
 }
 
-func Toggle(current []bool, swaps []int) []bool {
-	rtn := slices.Clone(current)
-	for _, s := range swaps {
-		rtn[s] = !current[s]
-	}
-	return rtn
-}
-
-func Score(want, got []bool) int {
-	score := 0
-	for i := range want {
-		if want[i] && got[i] {
-			score++ // dont penalise going backwards?
+func Encode(current []bool) string {
+	var s strings.Builder
+	for _, b := range current {
+		if b {
+			s.WriteRune('#')
+		} else {
+			s.WriteRune('.')
 		}
 	}
-	return score
+	return s.String()
+}
+
+func Decode(current string) []bool {
+	b := make([]bool, 0, len(current))
+	for _, c := range current {
+		if c == '#' {
+			b = append(b, true)
+		} else {
+			b = append(b, false)
+		}
+	}
+	return b
 }
 
 // Solution for Part 1 of the challenge
@@ -69,34 +82,28 @@ func Part1(input []Machine) int {
 	// Expand the buttons until we reach a solution? Is this brute force? maybe?
 	part1 := 0
 	for _, m := range input {
-		current_score := 0
-		zero_light := slices.Repeat([]bool{false}, m.Length)
-		queue := make([][][]int, 0)
-		for _, b := range m.Buttons {
-			queue = append(queue, [][]int{b})
-		}
+		want := Encode(m.Indicator)
+		states := make(map[string]int)
+		initial := strings.Repeat(".", m.Length)
+		states[initial] = 0
 		for {
-			newQueue := make([][][]int, 0)
-			for _, buttons := range queue {
-				curr := slices.Clone(zero_light)
-				for _, button := range buttons {
-					curr = Toggle(curr, button)
-				}
-				if slices.Equal(curr, m.Indicator) {
-					part1 += len(buttons)
-				} else {
-					if s := Score(m.Indicator, curr); s >= current_score {
-						for _, b := range m.Buttons {
-							new := slices.Clone(buttons)
-							new = append(new, b)
-							new2 := slices.Clone(new)
-							slices.Reverse(new2)
-							newQueue = append(newQueue, new)
-						}
+			newStates := maps.Clone(states)
+			for s := range states {
+				for _, b := range m.Buttons {
+					got := Encode(b(Decode(s)))
+					if _, ok := states[got]; !ok {
+						newStates[got] = states[s] + 1
 					}
 				}
 			}
-			queue = newQueue
+			//fmt.Println(newStates)
+			tmp_keys := slices.Collect(maps.Keys(newStates))
+			if slices.Contains(tmp_keys, want) {
+				//fmt.Println(want, newStates[want])
+				part1 += newStates[want]
+				break
+			}
+			states = newStates
 		}
 	}
 
@@ -104,8 +111,80 @@ func Part1(input []Machine) int {
 }
 
 // Solution for Part 2 of the challenge
-func Part2(input string) int {
-	return 1
+// Using https://github.com/willmadison/advent/blob/40df65ce677dc89c8c38afa88c90cd128d8a27d0/advent2025/factory.go#L20
+func Part2(input []Machine) int {
+	part2 := 0
+	for _, m := range input {
+		ctx := z3.NewContext(nil)
+		solver := z3.NewSolver(ctx)
+
+		intSort := ctx.IntSort()
+		zero := ctx.FromInt(0, intSort).(z3.Int)
+		one := ctx.FromInt(1, intSort).(z3.Int)
+
+		buttons := make([]z3.Int, len(m.RawButtons))
+		for i := range m.RawButtons {
+			buttons[i] = ctx.IntConst("button_" + strconv.Itoa(i))
+			solver.Assert(buttons[i].GE(zero))
+		}
+
+		for i, v := range m.Joltage {
+			inc_buttons := make([]z3.Int, 0)
+			for j, button := range m.RawButtons {
+				for _, b := range button {
+					if b == i {
+						inc_buttons = append(inc_buttons, buttons[j])
+					}
+				}
+			}
+
+			rhs := ctx.FromInt(int64(v), intSort).(z3.Int)
+
+			if len(inc_buttons) == 0 {
+				if v > 0 {
+					solver.Assert(zero.Eq(one))
+				}
+			} else {
+				sum := inc_buttons[0]
+				for _, t := range inc_buttons[1:] {
+					sum = sum.Add(t)
+				}
+				solver.Assert(sum.Eq(rhs))
+			}
+		}
+
+		tot := ctx.IntConst("total")
+		if len(buttons) > 0 {
+			sum_all := buttons[0]
+			for _, x := range buttons[1:] {
+				sum_all = sum_all.Add(x)
+			}
+			solver.Assert(tot.Eq(sum_all))
+		} else {
+			solver.Assert(tot.Eq(zero))
+		}
+
+		min_result := -1
+		for {
+			sat, err := solver.Check()
+			if !sat || err != nil {
+				break
+				//panic(err)
+			}
+
+			model := solver.Model()
+			res := model.Eval(tot, true)
+			val, _, _ := res.(z3.Int).AsInt64()
+
+			min_result = int(val)
+
+			cur := ctx.FromInt(val, intSort).(z3.Int)
+			solver.Assert(tot.LT(cur))
+		}
+
+		part2 += min_result
+	}
+	return part2
 }
 
 // Function to parse the input string (with newlines) into output of choice
@@ -117,7 +196,8 @@ func Parse(input string) ([]Machine, error) {
 			continue
 		}
 		m := Machine{}
-		m.Buttons = make([][]int, 0)
+		m.RawButtons = make([][]int, 0)
+		m.Buttons = make([]Button, 0)
 		words := strings.Split(l, " ")
 		for i, w := range words {
 			if i == 0 {
@@ -155,7 +235,17 @@ func Parse(input string) ([]Machine, error) {
 					}
 					button = append(button, n)
 				}
-				m.Buttons = append(m.Buttons, button)
+				m.RawButtons = append(m.RawButtons, button)
+				m.Buttons = append(m.Buttons, func(current []bool) []bool {
+					rtn := slices.Clone(current)
+					for _, b := range button {
+						if b >= len(current) {
+							panic(fmt.Errorf("out of range, buttons: %v, current: %q", button, current))
+						}
+						rtn[b] = !current[b]
+					}
+					return rtn
+				})
 			}
 		}
 		machines = append(machines, m)
